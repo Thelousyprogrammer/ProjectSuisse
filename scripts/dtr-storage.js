@@ -137,6 +137,9 @@ async function loadDTRRecords() {
     return Array.isArray(fallback) ? fallback : [];
 }
 
+// --- GLOBALS ---
+let _importedImageIds = []; // Temporary store for images from JSON import
+
 function getErrorSummary(err) {
     if (!err) return "Unknown error";
     if (typeof err === "string") return err;
@@ -185,12 +188,15 @@ function submitDTR() {
     const recordCheck = new DailyRecord(date, hours, reflection, [], [], [], l2Data);
     if (!checkDataHealth(recordCheck)) return;
 
-    if (files.length > 0) {
+    if (files.length > 0 || _importedImageIds.length > 0) {
         Promise.allSettled(files.map((file) => saveImageToStore(file)))
             .then((results) => {
-                const imageIds = results
+                const uploadedIds = results
                     .filter((r) => r.status === "fulfilled")
                     .map((r) => r.value);
+                
+                const finalImageIds = [...new Set([...uploadedIds, ..._importedImageIds])];
+
                 const rejected = results
                     .map((r, index) => ({ r, index }))
                     .filter((x) => x.r.status === "rejected")
@@ -204,12 +210,15 @@ function submitDTR() {
                     console.warn("Some uploaded images failed to store in IndexedDB.", rejected);
                     alert("Some images failed to store ({count}). Saving only successfully uploaded images.", { count: rejected.length });
                 }
-                saveRecord(date, hours, reflection, accomplishments, tools, imageIds, l2Data);
+                saveRecord(date, hours, reflection, accomplishments, tools, finalImageIds, l2Data);
+                _importedImageIds = []; // Clear after use
             })
             .catch((err) => {
                 console.error("IndexedDB image save error:", err);
-                if (confirm("Failed to save images to IndexedDB. Save DTR without images?")) {
-                    saveRecord(date, hours, reflection, accomplishments, tools, [], l2Data);
+                const finalIds = _importedImageIds.length > 0 ? _importedImageIds : [];
+                if (confirm("Failed to save new images to IndexedDB. Save DTR with imported/existing images only?")) {
+                    saveRecord(date, hours, reflection, accomplishments, tools, finalIds, l2Data);
+                    _importedImageIds = [];
                 } else {
                     alert("Submission cancelled.");
                 }
@@ -405,6 +414,73 @@ async function saveRecord(date, hours, reflection, accomplishments, tools, image
 
     clearDTRForm();
     alert("Daily DTR saved and form cleared!");
+}
+
+async function bulkMergeRecords(importedList) {
+    if (!Array.isArray(importedList) || importedList.length === 0) return;
+
+    const previous = [...dailyRecords];
+    const existingMap = {};
+    dailyRecords.forEach(r => {
+        const dk = toGmt8DateKey(r.date) || r.date;
+        existingMap[dk] = r;
+    });
+
+    let newCount = 0;
+    let updateCount = 0;
+    let imageCount = 0;
+
+    for (const raw of importedList) {
+        const dk = toGmt8DateKey(raw.date) || raw.date;
+        
+        let finalImageIds = Array.isArray(raw.imageIds) ? [...raw.imageIds] : [];
+        if (Array.isArray(raw.embeddedImages) && raw.embeddedImages.length > 0) {
+            try {
+                // Save embedded images to store and get new IDs
+                const savedIds = await Promise.all(
+                    raw.embeddedImages.map(imgData => saveImageToStore(imgData))
+                );
+                // Merge with existing IDs if any, ensuring uniqueness
+                finalImageIds = [...new Set([...finalImageIds, ...savedIds])];
+                imageCount += savedIds.length;
+            } catch (e) {
+                console.warn("Failed to restore some images for date:", dk, e);
+            }
+        }
+
+        const record = new DailyRecord(dk, raw.hours, raw.reflection, raw.accomplishments, raw.tools, [], {
+            personalHours: raw.personalHours,
+            sleepHours: raw.sleepHours,
+            recoveryHours: raw.recoveryHours,
+            commuteTotal: raw.commuteTotal,
+            commuteProductive: raw.commuteProductive,
+            identityScore: raw.identityScore
+        }, finalImageIds);
+
+        if (existingMap[dk]) {
+            updateCount++;
+        } else {
+            newCount++;
+        }
+        existingMap[dk] = record;
+    }
+
+    dailyRecords = Object.values(existingMap);
+    dailyRecords.sort((a, b) => (toGmt8DateKey(a.date) || "").localeCompare(toGmt8DateKey(b.date) || ""));
+
+    if (!await persistDTR(dailyRecords)) {
+        dailyRecords = previous;
+        alert("Bulk import failed due to storage limits.");
+        return;
+    }
+
+    loadReflectionViewer();
+    renderDailyGraph();
+    renderWeeklyGraph();
+    updateExportWeekOptions();
+    if (typeof updateStorageVisualizer === "function") updateStorageVisualizer();
+
+    alert(`Bulk import complete!\n- ${newCount} new records added\n- ${updateCount} existing records updated\n- ${imageCount} images restored`);
 }
 
 function resolveDateConflictModal({ incomingDate, existingDate }) {

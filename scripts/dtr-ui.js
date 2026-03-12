@@ -25,6 +25,10 @@ function clearDTRForm() {
     document.getElementById("commuteTotal").value = "";
     document.getElementById("commuteProductive").value = "";
     document.getElementById("identityScore").value = "0";
+
+    if (typeof _importedImageIds !== "undefined") {
+        _importedImageIds = [];
+    }
 }
 
 function updateWeeklyCounter(dateInput) {

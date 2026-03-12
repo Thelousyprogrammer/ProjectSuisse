@@ -489,6 +489,7 @@ function exportWeeklyDOCX() {
 }
 
 let _pendingImportedRecord = null;
+let _pendingImportedAllRecords = [];
 let _pendingImportMeta = "";
 let _pendingJsonExportBlob = null;
 let _pendingJsonExportFileName = "";
@@ -503,10 +504,20 @@ function getRecordTimelineData(dateLike) {
     };
 }
 
-function normalizeRecordForJson(record) {
+async function normalizeRecordForJson(record, includeImages = false) {
     const safe = record || {};
     const dateKey = toGmt8DateKey(safe.date) || "";
     const timeline = getRecordTimelineData(dateKey);
+    
+    let embeddedImages = [];
+    if (includeImages && typeof getRecordImageUrls === "function") {
+        try {
+            embeddedImages = await getRecordImageUrls(safe);
+        } catch (e) {
+            console.warn("Failed to fetch images for export on date:", dateKey, e);
+        }
+    }
+
     return {
         date: dateKey,
         weekNumber: timeline.weekNumber,
@@ -525,19 +536,24 @@ function normalizeRecordForJson(record) {
         recoveryHours: parseFloat(safe.recoveryHours) || 0,
         commuteTotal: parseFloat(safe.commuteTotal) || 0,
         commuteProductive: parseFloat(safe.commuteProductive) || 0,
-        identityScore: parseInt(safe.identityScore, 10) || 0
+        identityScore: parseInt(safe.identityScore, 10) || 0,
+        embeddedImages: embeddedImages // Add this field
     };
 }
 
-function exportRecordsJSON() {
+async function exportRecordsJSON() {
     if (!Array.isArray(dailyRecords) || !dailyRecords.length) {
         alert("No records to export.");
         return;
     }
 
+    const includeImages = confirm("Include images in JSON export?\n(Note: This will significantly increase file size)");
+
+    const records = await Promise.all(dailyRecords.map(r => normalizeRecordForJson(r, includeImages)));
+
     const payload = {
         type: "custom-dtr-records-export",
-        schemaVersion: 1,
+        schemaVersion: 1, // Updated version
         exportedAt: new Date().toISOString(),
         settings: {
             ojtStartDate: getCurrentOjtStartDate(),
@@ -546,7 +562,7 @@ function exportRecordsJSON() {
             timeZone: getCurrentTimeZone()
         },
         recordCount: dailyRecords.length,
-        records: dailyRecords.map(normalizeRecordForJson)
+        records: records
     };
 
     const jsonText = JSON.stringify(payload, null, 2);
@@ -560,7 +576,14 @@ function exportRecordsJSON() {
 
     _pendingJsonExportBlob = new Blob([jsonText], { type: "application/json;charset=utf-8" });
     _pendingJsonExportFileName = fileName;
-    previewEl.textContent = jsonText;
+    
+    // For large JSONs with images, we might want to truncate the preview
+    if (jsonText.length > 50000) {
+        previewEl.textContent = jsonText.substring(0, 50000) + "\n\n... (preview truncated for performance) ...";
+    } else {
+        previewEl.textContent = jsonText;
+    }
+    
     const fileNameInput = document.getElementById("jsonExportFileNameInput");
     if (fileNameInput) fileNameInput.value = fileName;
     modal.style.display = "flex";
@@ -621,16 +644,48 @@ function extractJsonImportRecords(parsed) {
     return [];
 }
 
+function normalizeRecordForImport(record) {
+    const safe = record || {};
+    const dateKey = toGmt8DateKey(safe.date) || "";
+    const timeline = getRecordTimelineData(dateKey);
+    return {
+        date: dateKey,
+        weekNumber: timeline.weekNumber,
+        dayNumber: timeline.dayNumber,
+        timelineLabel: timeline.label,
+        hours: parseFloat(safe.hours) || 0,
+        reflection: typeof safe.reflection === "string" ? safe.reflection : "",
+        accomplishments: Array.isArray(safe.accomplishments)
+            ? safe.accomplishments.map((a) => String(a || "").trim()).filter(Boolean)
+            : [],
+        tools: Array.isArray(safe.tools)
+            ? safe.tools.map((t) => String(t || "").trim()).filter(Boolean)
+            : [],
+        personalHours: parseFloat(safe.personalHours) || 0,
+        sleepHours: parseFloat(safe.sleepHours) || 0,
+        recoveryHours: parseFloat(safe.recoveryHours) || 0,
+        commuteTotal: parseFloat(safe.commuteTotal) || 0,
+        commuteProductive: parseFloat(safe.commuteProductive) || 0,
+        identityScore: parseInt(safe.identityScore, 10) || 0,
+        embeddedImages: Array.isArray(safe.embeddedImages) ? safe.embeddedImages : []
+    };
+}
+
 function buildRecordFromImport(raw) {
-    const normalized = normalizeRecordForJson(raw);
+    const normalized = normalizeRecordForImport(raw);
     if (!normalized.date || !Number.isFinite(normalized.hours)) return null;
     return normalized;
 }
 
-function openJsonImportPreviewModal(record, metaLabel) {
+function openJsonImportPreviewModal(record, metaLabel, showBulk = false) {
     const modal = document.getElementById("jsonImportPreviewModal");
     if (!modal) return;
     const timeline = getRecordTimelineData(record.date);
+
+    const bulkBtn = document.getElementById("confirmBulkImportBtn");
+    if (bulkBtn) {
+        bulkBtn.style.display = showBulk ? "inline-block" : "none";
+    }
 
     document.getElementById("jsonPreviewDate").textContent = record.date
         ? `${record.date} (${timeline.label})`
@@ -642,6 +697,12 @@ function openJsonImportPreviewModal(record, metaLabel) {
     document.getElementById("jsonPreviewSleep").textContent = String(record.sleepHours ?? 0);
     document.getElementById("jsonPreviewRecovery").textContent = String(record.recoveryHours ?? 0);
     document.getElementById("jsonPreviewIdentity").textContent = getIdentityAlignmentLabel(record.identityScore || 0);
+    
+    const imgCountEl = document.getElementById("jsonPreviewImagesCount");
+    if (imgCountEl) {
+        imgCountEl.textContent = String((record.embeddedImages || []).length);
+    }
+
     document.getElementById("jsonPreviewReflection").textContent = record.reflection || "-";
     document.getElementById("jsonPreviewMeta").textContent = metaLabel || "";
     modal.style.display = "flex";
@@ -649,12 +710,13 @@ function openJsonImportPreviewModal(record, metaLabel) {
 
 function closeJsonImportPreviewModal() {
     _pendingImportedRecord = null;
+    _pendingImportedAllRecords = [];
     _pendingImportMeta = "";
     const modal = document.getElementById("jsonImportPreviewModal");
     if (modal) modal.style.display = "none";
 }
 
-function applyImportedRecordToForm(record) {
+async function applyImportedRecordToForm(record) {
     document.getElementById("date").value = record.date || "";
     document.getElementById("hours").value = record.hours ?? "";
     document.getElementById("reflection").value = record.reflection || "";
@@ -669,20 +731,70 @@ function applyImportedRecordToForm(record) {
 
     const imgInput = document.getElementById("images");
     if (imgInput) imgInput.value = "";
+    
+    // Handle status images
+    _importedImageIds = [];
     const preview = document.getElementById("imagePreview");
     if (preview) preview.innerHTML = "";
+
+    if (Array.isArray(record.embeddedImages) && record.embeddedImages.length > 0) {
+        try {
+            // Save to IndexedDB immediately for preview
+            _importedImageIds = await Promise.all(
+                record.embeddedImages.map(img => saveImageToStore(img))
+            );
+            
+            if (preview) {
+                const label = document.createElement("p");
+                label.style.cssText = "width:100%; font-size:10px; margin-bottom:5px; opacity:0.8;";
+                label.textContent = `Imported Images (${_importedImageIds.length}):`;
+                preview.appendChild(label);
+
+                _importedImageIds.forEach(id => {
+                    getImageFromStore(id).then(url => {
+                        const img = document.createElement("img");
+                        img.src = url;
+                        img.style.cssText = "width:60px; height:60px; object-fit:cover; border-radius:6px; border:2px solid var(--accent);";
+                        preview.appendChild(img);
+                    });
+                });
+            }
+        } catch (e) {
+            console.error("Failed to restore images for form preview:", e);
+        }
+    }
 
     updateWeeklyCounter(record.date);
 }
 
-function confirmJsonImportToForm() {
+async function confirmJsonImportToForm() {
     if (!_pendingImportedRecord) {
         closeJsonImportPreviewModal();
         return;
     }
-    applyImportedRecordToForm(_pendingImportedRecord);
+    await applyImportedRecordToForm(_pendingImportedRecord);
     closeJsonImportPreviewModal();
-    alert("Imported record loaded into Session Input. Click Save Day to persist it.");
+    alert("Imported record (including images) loaded into Session Input. Click Save Day to persist it.");
+}
+
+async function bulkImportAllRecords() {
+    if (!_pendingImportedAllRecords || !_pendingImportedAllRecords.length) {
+        closeJsonImportPreviewModal();
+        return;
+    }
+
+    const count = _pendingImportedAllRecords.length;
+    if (!confirm(`Are you sure you want to merge ${count} records into your current data? Existing records for the same dates will be handled.`)) {
+        return;
+    }
+
+    if (typeof bulkMergeRecords === "function") {
+        await bulkMergeRecords(_pendingImportedAllRecords);
+    } else {
+        alert("Bulk merge function not found in storage module.");
+    }
+    
+    closeJsonImportPreviewModal();
 }
 
 function handleJsonImportFile(event) {
@@ -711,10 +823,11 @@ function handleJsonImportFile(event) {
             validRecords.sort((a, b) => (a.date || "").localeCompare(b.date || ""));
             const selected = validRecords[validRecords.length - 1];
             _pendingImportedRecord = selected;
+            _pendingImportedAllRecords = validRecords;
             _pendingImportMeta = validRecords.length > 1
                 ? `Found ${validRecords.length} records in file. Previewing the latest date (${selected.date}).`
                 : "Found 1 record in file.";
-            openJsonImportPreviewModal(selected, _pendingImportMeta);
+            openJsonImportPreviewModal(selected, _pendingImportMeta, validRecords.length > 1);
         } catch (err) {
             console.error("JSON import parse error:", err);
             alert("Failed to parse JSON file.");

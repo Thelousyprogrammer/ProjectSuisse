@@ -339,6 +339,7 @@
       <p style="margin:0;"><strong>Sleep (Hours)</strong>: <span id="jsonPreviewSleep">-</span></p>
       <p style="margin:0;"><strong>Recovery Hours</strong>: <span id="jsonPreviewRecovery">-</span></p>
       <p style="margin:0;"><strong>Identity Alignment (1-5)</strong>: <span id="jsonPreviewIdentity">-</span></p>
+      <p style="margin:0;"><strong>Images Included</strong>: <span id="jsonPreviewImagesCount">0</span></p>
     </div>
     <div style="margin-top:10px;">
       <p style="margin:0 0 5px 0;"><strong>Daily Reflection</strong>:</p>
@@ -347,7 +348,8 @@
     <p id="jsonPreviewMeta" style="opacity:0.75; font-size:0.85em; margin:10px 0 0 0;"></p>
     <div class="modal-actions" style="border-top:1px solid var(--border); padding-top:15px;">
       <button type="button" onclick="closeJsonImportPreviewModal()" style="background: transparent; color: var(--text); border: 1px solid var(--border);">Cancel</button>
-      <button type="button" onclick="confirmJsonImportToForm()">Confirm Import</button>
+      <button type="button" id="confirmBulkImportBtn" onclick="bulkImportAllRecords()" style="display:none; background:var(--accent); color:#fff; margin-right:8px;">Bulk Import All Records</button>
+      <button type="button" onclick="confirmJsonImportToForm()">Preview to Form</button>
     </div>
   </div>
 </div>
