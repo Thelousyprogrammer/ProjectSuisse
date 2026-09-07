@@ -40,10 +40,6 @@ html[lang="zh-HK"] :is(body, input, textarea, select, button, label, p, span:not
   font-family: "Noto Sans Hong Kong", "Noto Sans HK", var(--font-body, "JetBrains Mono Nerd Font", sans-serif) !important;
 }
 
-html[lang="nl"] :is(body, input, textarea, select, button, label, p, span:not(.material-symbols-outlined), h1, h2, h3),
-html[lang="fi"] :is(body, input, textarea, select, button, label, p, span:not(.material-symbols-outlined), h1, h2, h3),
-html[lang="sv"] :is(body, input, textarea, select, button, label, p, span:not(.material-symbols-outlined), h1, h2, h3),
-html[lang="no"] :is(body, input, textarea, select, button, label, p, span:not(.material-symbols-outlined), h1, h2, h3),
 html[lang="el"] :is(body, input, textarea, select, button, label, p, span:not(.material-symbols-outlined), h1, h2, h3) {
   font-family: "Noto Sans", var(--font-body, "JetBrains Mono Nerd Font", sans-serif) !important;
 }
