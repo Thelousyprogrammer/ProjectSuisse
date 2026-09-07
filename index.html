@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <title data-i18n="head_title">Custom DTR | Delta Time System</title>
-  <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&family=Noto+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&family=Noto+Sans+SC:wght@400;600;700&family=Noto+Sans+TC:wght@400;600;700&family=Noto+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/telemetry.css">
-  <link rel="stylesheet" href="css/theme.css">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://static.wikia.nocookie.net; connect-src 'self' ws: wss: https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net;">
+  <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&family=Noto+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&family=Noto+Sans+SC:wght@400;600;700&family=Noto+Sans+TC:wght@400;600;700&family=Noto+Sans+HK:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css?v=4.3.0">
+  <link rel="stylesheet" href="css/telemetry.css?v=4.3.0">
+  <link rel="stylesheet" href="css/theme.css?v=4.3.0">
+  <link rel="stylesheet" href="css/calendar-export.css?v=4.3.0">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <!-- favicon -->
   <link rel="icon" href="favicons/F1Favicon32.png" sizes="32x32" type="image/png">
@@ -15,17 +17,73 @@
   <link rel="apple-touch-icon" href="favicons/apple-touch-icon.png" sizes="192x192">
   <link rel="manifest" href="favicons/site.webmanifest">
   <meta name="theme-color" content="#10131a">
-  <script>
-    const savedTheme = localStorage.getItem('user-theme') || 'f1';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  </script>
 </head>
 <body>
+<div id="pageLoader" class="page-loader">
+  <div class="page-loader-panel">
+    <img class="page-loader-logo" src="favicons/F1Favicon.svg" alt="DTR Logo" id="pageLoaderLogo">
+    <p class="page-loader-title" data-i18n="loader.custom_dtr">Custom DTR</p>
+    <p class="page-loader-text" data-i18n="loader.loading_dtr">Loading DTR...</p>
+  </div>
+  <div class="page-loader-bar"><span class="page-loader-progress"></span></div>
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('user-theme') || 'f1';
+      const savedLang = localStorage.getItem('dtr-language') || 'en';
+      
+      // Inline translations for loader to prevent flash of English
+      const translations = {
+        'de': { title: 'Benutzerdefinierter DTR', text: 'DTR wird geladen...' },
+        'es': { title: 'DTR Personalizado', text: 'Cargando DTR...' },
+        'fr': { title: 'DTR Personnalisé', text: 'Chargement DTR...' },
+        'id': { title: 'DTR Kustom', text: 'Memuat DTR...' },
+        'it': { title: 'DTR Personalizzato', text: 'Caricamento DTR...' },
+        'ja': { title: 'カスタムDTR', text: 'DTRをロード中...' },
+        'ms': { title: 'DTR Tersuai', text: 'Memuatkan DTR...' },
+        'pt': { title: 'DTR Personalizado', text: 'Carregando DTR...' },
+        'tl': { title: 'Custom DTR', text: 'Nilo-load ang DTR...' },
+        'vi': { title: 'DTR Tùy Chỉnh', text: 'Đang tải DTR...' },
+        'zh-Hans': { title: '自定义 DTR', text: '正在加载 DTR...' },
+        'zh-Hant': { title: '自訂 DTR', text: '正在載入 DTR...' },
+        'en': { title: 'Custom DTR', text: 'Loading DTR...' }
+      };
+
+      const baseLang = savedLang.split('-')[0];
+      const langData = translations[savedLang] || translations[baseLang] || translations['en'];
+
+      const titleEl = document.querySelector('#pageLoader .page-loader-title');
+      const textEl = document.querySelector('#pageLoader .page-loader-text');
+      if (titleEl) titleEl.textContent = langData.title;
+      if (textEl) textEl.textContent = langData.text;
+
+      const logoMap = {
+        'f1': 'favicons/F1Favicon.svg',
+        'f1-light': 'favicons/F1Favicon.svg',
+        'cadillac': 'favicons/CaddyFavicon.svg',
+        'apx': 'favicons/APXFavicon.svg',
+        'mclaren': 'favicons/McLFavicon.svg',
+        'kiki': 'favicons/KikiFavicon.svg',
+        'ferrari': 'favicons/FerrariFavicon.svg',
+        'ztmy': 'favicons/ZTMYFavicon.svg'
+      };
+      
+      const logoEl = document.getElementById('pageLoaderLogo');
+      if (logoEl && logoMap[savedTheme]) {
+        logoEl.src = logoMap[savedTheme];
+      }
+      
+      // Add light mode class instantly to prevent flash
+      if (savedTheme === 'f1-light') {
+        const loaderEl = document.getElementById('pageLoader');
+        if (loaderEl) loaderEl.classList.add('page-loader-light');
+      }
+    })();
+  </script>
+</div>
 
 <div class="container">
-
   <!-- DTR Header / Label -->
-  <div class="card">
+  <div class="card static-card" id="headerCard">
     <h1 data-i18n="app_title">Custom Daily Time Record (DTR)</h1>
     <p class="subtitle" data-i18n="app_subtitle">
       Formula 1 Delta System • Target-Based Productivity Telemetry
@@ -36,30 +94,28 @@
         <select id="languageSelect" style="max-width: 220px;"></select>
       </div>
       <div style="display:flex; align-items:center; gap:10px;">
-        <button id="f1LightToggleBtn" class="telemetry-btn" type="button" onclick="toggleF1LightMode()" style="display:flex; align-items:center; justify-content:center; padding: 6px 12px; width:44px; height:38px;">
-          <span class="material-symbols-outlined">light_mode</span>
+        <button id="openArchiveBtn" class="telemetry-btn" type="button" data-action="open-archive-viewer" style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding: 6px 14px; height:38px; color:var(--text);" title="Archive Viewer">
+          <span class="material-symbols-outlined notranslate" translate="no" style="font-size: 18px;">inventory_2</span>
+          <span data-i18n="archive_viewer_title">Archive</span>
         </button>
-        <button class="telemetry-btn" type="button" onclick="window.location.href='faq.html'" style="display:flex; align-items:center; justify-content:center; padding: 6px 12px; height:38px;" data-i18n="faq">FAQ</button>
+        <button id="openFaqBtn" class="telemetry-btn" type="button" data-action="open-faq" onclick="window.location.href='faq.html'" style="display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; padding:0; color:var(--text);" title="Frequently Asked Questions" aria-label="Frequently Asked Questions">
+          <span class="material-symbols-outlined notranslate" translate="no" style="font-size: 18px;">help</span>
+        </button>
+        <button id="openSettingsBtn" class="telemetry-btn settings-header-btn" type="button" data-action="open-settings" style="display:flex; align-items:center; justify-content:center; width:38px; height:38px; padding:0;" title="Settings">
+          <span class="material-symbols-outlined notranslate" translate="no">settings</span>
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Theme Switcher -->
-  <div class="card">
-    <h2 data-i18n="dtr_theme">DTR Theme</h2>
-    <div class="theme-switch-grid">
-      <button class="theme-switch-card btn-theme-f1" onclick="setTheme('f1')" data-i18n="theme_formula1">Formula 1</button>
-      <button class="theme-switch-card btn-theme-cadillac" onclick="setTheme('cadillac')" data-i18n="theme_cadillac">Cadillac</button>
-      <button class="theme-switch-card btn-theme-apx" onclick="setTheme('apx')" data-i18n="theme_apx">APX GP</button>
-      <button class="theme-switch-card btn-theme-mclaren" onclick="setTheme('mclaren')" data-i18n="theme_mclaren">McLaren</button>
-      <button class="theme-switch-card btn-theme-ferrari" onclick="setTheme('ferrari')" data-i18n="theme_ferrari">Ferrari</button>
-      <button class="theme-switch-card btn-theme-kiki" onclick="setTheme('kiki')" data-i18n="theme_kiki">Kiki</button>
-      <button class="theme-switch-card btn-theme-ztmy" onclick="setTheme('ztmy')" data-i18n="theme_ztmy">ずとまよ</button>
+  <!-- OJT SETTINGS -->
+  <div class="card card-timeline" id="timelineSettingsCard">
+    <div class="card-header">
+      <h2 data-i18n="ojt_timeline_settings">OJT Timeline Settings</h2>
+      <div class="card-controls">
+        <button class="card-control-btn" data-action="toggle-card" title="Collapse/Expand"><span class="material-symbols-outlined notranslate" translate="no">expand_less</span></button>
+      </div>
     </div>
-  </div>
-
-  <div class="card">
-    <h2 data-i18n="ojt_timeline_settings">OJT Timeline Settings</h2>
     <div class="step">
       <label for="ojtStartDate" data-i18n="starting_date">Starting Date</label>
       <input type="date" id="ojtStartDate">
@@ -80,12 +136,89 @@
       <select id="ojtTimeZone" title="Timezone list based on IANA region IDs" data-i18n-title="timezone_list_title"></select>
       <small style="opacity:0.75;" data-i18n="ojt_tz_help">Used to interpret date boundaries and "today" for week/forecast calculations.</small>
     </div>
-    <button type="button" onclick="saveOjtStartDateFromUI()" data-i18n="save_timeline_settings">Save Timeline Settings</button>
+    <button type="button" data-action="save-timeline-settings" data-i18n="save_timeline_settings">Save Timeline Settings</button>
   </div>
 
+  <div class="card" id="hardwareTelemetryCard">
+    <div class="card-header">
+      <h2 data-i18n="hardware.title">Hardware Telemetry System</h2>
+      <div class="card-controls">
+        <button class="card-control-btn" id="hwConsentBtn" data-action="toggle-hw-consent" title="Opt Out / Deny Local Telemetry">
+          <span class="material-symbols-outlined notranslate" translate="no" id="hwConsentIcon">shield</span>
+        </button>
+        <button class="card-control-btn" data-action="toggle-card" title="Collapse/Expand"><span class="material-symbols-outlined notranslate" translate="no">expand_less</span></button>
+      </div>
+    </div>
+
+    <!-- Active Metrics Container (Shown when consent is granted) -->
+    <div id="hwMetricsContainer">
+      <div class="step">
+        <p style="margin:0; opacity:0.9;" data-i18n="hardware.description">View your local hardware status and browser performance metrics. No full device telemetry is sent.</p>
+      </div>
+      <div class="step" style="display:grid; gap:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span data-i18n="hardware.gpu">GPU</span>
+          <strong id="hwGpu" style="text-align:right; max-width:60%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">--</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span data-i18n="hardware.platform">Platform</span>
+          <strong id="hwPlatform">--</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span data-i18n="hardware.cpu_cores">CPU Cores</span>
+          <strong id="hwCpuCores">--</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span data-i18n="hardware.device_memory">Device Memory</span>
+          <strong id="hwDeviceMemory">--</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span data-i18n="hardware.battery">Battery</span>
+          <strong id="hwBattery">--</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span data-i18n="hardware.network">Network</span>
+          <strong id="hwNetworkStatus">--</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span data-i18n="hardware.frame_rate">Frame Rate</span>
+          <strong id="hwFps">--</strong>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:8px;">
+        <small style="opacity:0.75; line-height:1.45; flex:1; min-width:260px;" data-i18n="hardware.limits_disclaimer">
+          Limits: values are browser-exposed only. CPU/Memory are estimates. GPU info depends on OS permissions. Battery may falsely report 100% on privacy-focused browsers due to anti-fingerprinting. FPS is page-render performance.
+        </small>
+        <button type="button" class="telemetry-btn" data-action="deny-hw-telemetry" style="font-size:11px; padding:4px 10px; white-space:nowrap;" title="Opt out of local hardware telemetry">
+          <span class="material-symbols-outlined notranslate" translate="no" style="font-size:13px;">block</span>
+          <span data-i18n="hardware.opt_out">Opt Out / Deny</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Denied / Opted-out State Banner (Shown when user denies telemetry) -->
+    <div id="hwDeniedBanner" class="step" style="display:none; text-align:center; padding:24px 16px; background:rgba(255,255,255,0.02); border:1px dashed var(--border); border-radius:8px;">
+      <span class="material-symbols-outlined notranslate" translate="no" style="font-size:36px; color:var(--accent); margin-bottom:8px; opacity:0.85;">shield</span>
+      <h3 style="margin:0 0 6px 0; font-size:1rem; font-family:var(--font-heading); text-transform:uppercase; letter-spacing:0.5px;" data-i18n="hardware.denied_title">Telemetry Inspection Denied</h3>
+      <p style="margin:0 0 16px 0; opacity:0.8; font-size:0.88rem; max-width:480px; margin-left:auto; margin-right:auto; line-height:1.4;" data-i18n="hardware.status_denied">
+        Hardware Telemetry is Denied. No hardware or browser performance metrics are being inspected.
+      </p>
+      <button type="button" class="telemetry-btn" data-action="allow-hw-telemetry" style="padding:8px 18px; font-weight:bold; font-size:12px; display:inline-flex; align-items:center; gap:6px;">
+        <span class="material-symbols-outlined notranslate" translate="no" style="font-size:16px;">check_circle</span>
+        <span data-i18n="hardware.opt_in">Allow Telemetry</span>
+      </button>
+    </div>
+  </div>
+
+
   <!-- DTR Input Form -->
-  <div class="card">
-    <h2 data-i18n="session_input">Session Input</h2>
+  <div class="card" id="inputCard">
+    <div class="card-header">
+      <h2 data-i18n="session_input">Session Input</h2>
+      <div class="card-controls">
+        <button class="card-control-btn" data-action="toggle-card" title="Collapse/Expand"><span class="material-symbols-outlined notranslate" translate="no">expand_less</span></button>
+      </div>
+    </div>
 
     <div class="step">
       <label for="date" data-i18n="dtr_date">DTR Date</label>
@@ -170,12 +303,14 @@
       </div>
     </div>
 
-    <button onclick="submitDTR()" data-i18n="save_day">Save Day</button>
-    <button class="btn-destructive" onclick="deleteLastRecord()" data-i18n="delete_last_entry">Delete Last Entry</button>
-    <button class="btn-destructive" onclick="clearAllRecords()" data-i18n="clear_all_records">Clear All Records</button>
-    <button class="btn-destructive" onclick="clearDTRForm()" data-i18n="clear_dtr_form">Clear DTR Form</button>
-    <input type="file" id="jsonImportInput" accept=".json,application/json" style="display:none;" onchange="handleJsonImportFile(event)">
-    <button type="button" onclick="document.getElementById('jsonImportInput').click()" data-i18n="import_record_json">Import Record (.json)</button>
+    <button data-action="submit-dtr" data-i18n="save_day">Save Day</button>
+    <button class="btn-destructive" data-action="delete-last-record" data-i18n="delete_last_entry">Delete Last Entry</button>
+    <button class="btn-destructive" data-action="clear-all-records" data-i18n="clear_all_records">Clear All Records</button>
+    <button class="btn-destructive" data-action="clear-dtr-form" data-i18n="clear_dtr_form">Clear DTR Form</button>
+    <input type="file" id="jsonImportInput" accept=".json,application/json" style="display:none;">
+    <button type="button" data-action="trigger-json-import" data-i18n="import_record_json">Import Record (.json)</button>
+    <input type="file" id="tomlImportInput" accept=".toml,text/plain" style="display:none;">
+    <button type="button" data-action="trigger-toml-import" data-i18n="import_record_toml">Import Record (.toml)</button>
   </div>
 
   <!-- Session Summary Preview -->
@@ -186,26 +321,36 @@
   <!-- ===================== -->
 
 
-  <div class="card">
-    <h2 data-i18n="reflection_viewer">Reflection Viewer</h2>
+  <div class="card" id="reflectionCard">
+    <div class="card-header">
+      <h2 data-i18n="reflection_viewer">Reflection Viewer</h2>
+      <div class="card-controls">
+        <button class="card-control-btn" data-action="toggle-card" title="Collapse/Expand"><span class="material-symbols-outlined notranslate" translate="no">expand_less</span></button>
+      </div>
+    </div>
     <p class="subtitle" data-i18n="reflection_viewer_subtitle">All saved reflections for quick review & export</p>
     
     <div class="sort-controls">
       <label for="sortSelect" data-i18n="sort_by">Sort by</label>
-      <select id="sortSelect" onchange="changeSortMode(this.value)">
+      <select id="sortSelect">
         <option value="date-asc" data-i18n="sort_date_asc">Date (Oldest First)</option>
         <option value="date-desc" data-i18n="sort_date_desc">Date (Newest First)</option>
         <option value="delta-desc" data-i18n="sort_delta_desc">Performance (Best Delta)</option>
         <option value="delta-asc" data-i18n="sort_delta_asc">Performance (Worst Delta)</option>
       </select>
       <label for="reflectionViewMode" style="margin-left:10px;" data-i18n="view">View</label>
-      <select id="reflectionViewMode" onchange="changeReflectionViewMode(this.value)">
-        <option value="all" data-i18n="all_entries">All Entries</option>
+      <select id="reflectionViewMode">
         <option value="week" data-i18n="by_week">By Week</option>
+        <option value="month" data-i18n="by_month">By Month</option>
+        <option value="all" data-i18n="all_entries">All Entries</option>
       </select>
-      <label for="reflectionWeekSelect" style="margin-left:10px;" data-i18n="week">Week</label>
-      <select id="reflectionWeekSelect" onchange="loadReflectionViewer()">
+      <label for="reflectionWeekSelect" id="reflectionWeekLabel" style="margin-left:10px;" data-i18n="week">Week</label>
+      <select id="reflectionWeekSelect">
         <option value="current" data-i18n="current_week">Current Week</option>
+      </select>
+      <label for="reflectionMonthSelect" id="reflectionMonthLabel" style="margin-left:10px; display:none;" data-i18n="month">Month</label>
+      <select id="reflectionMonthSelect" style="display:none;">
+        <option value="current" data-i18n="current_month">Current Month</option>
       </select>
     </div>
 
@@ -214,10 +359,13 @@
     </div>
   </div>
 
-  <div class="card" style="position: relative;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+  <div class="card" style="position: relative;" id="dailyGraphCard">
+    <div class="card-header">
       <h2 style="margin: 0;" data-i18n="daily_performance_graph">Daily Performance Graph</h2>
-      <button class="telemetry-btn" onclick="window.location.href='telemetry.html#daily'" data-i18n="telemetry_view">Telemetry View</button>
+      <div class="card-controls">
+        <a href="telemetry.html#daily" class="telemetry-btn" style="text-decoration:none; display:inline-flex; align-items:center;" data-i18n="telemetry_view">Telemetry View</a>
+        <button class="card-control-btn" data-action="toggle-card" title="Collapse/Expand"><span class="material-symbols-outlined notranslate" translate="no">expand_less</span></button>
+      </div>
     </div>
     
     <div class="graph-wrapper">
@@ -242,37 +390,106 @@
   </div>
 
   <!-- WEEKLY PERFORMANCE CARD -->
-  <div class="card" style="position: relative;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+  <div class="card" style="position: relative;" id="weeklyGraphCard">
+    <div class="card-header">
       <h2 style="margin: 0;" data-i18n="weekly_summary_graph">Weekly Summary Graph</h2>
-      <button class="telemetry-btn" onclick="window.location.href='telemetry.html#weekly'" data-i18n="telemetry_view">Telemetry View</button>
+      <div class="card-controls">
+        <a href="telemetry.html#weekly" class="telemetry-btn" style="text-decoration:none; display:inline-flex; align-items:center;" data-i18n="telemetry_view">Telemetry View</a>
+        <button class="card-control-btn" data-action="toggle-card" title="Collapse/Expand"><span class="material-symbols-outlined notranslate" translate="no">expand_less</span></button>
+      </div>
     </div>
     <div class="graph-wrapper">
       <div id="weeklyGraph" class="weekly-graph-container"></div>
     </div>
   </div>
 
+  <!-- Calendar Image Export -->
+  <div class="card calendar-export-card" id="calendarExportCard">
+    <div class="card-header">
+      <h2 data-i18n="calendar_export_title">Calendar Image Export</h2>
+      <div class="card-controls">
+        <button class="card-control-btn" data-action="toggle-card" title="Collapse/Expand"><span class="material-symbols-outlined notranslate" translate="no">expand_less</span></button>
+      </div>
+    </div>
+    <p class="subtitle" data-i18n="calendar_export_subtitle">Preview a monthly attendance calendar and export it as PNG or JPEG.</p>
+    <div class="calendar-export-controls">
+      <div class="step">
+        <label for="calendarMonthSelect" data-i18n="month">Month</label>
+        <select id="calendarMonthSelect"></select>
+      </div>
+      <div class="step">
+        <label for="calendarTitleInput" data-i18n="title">Title</label>
+        <input type="text" id="calendarTitleInput" placeholder="e.g. OJT Attendance Calendar" data-i18n-placeholder="placeholder_calendar_title">
+      </div>
+      <div class="step">
+        <label for="calendarFormatSelect" data-i18n="export_format">Export Format</label>
+        <select id="calendarFormatSelect">
+          <option value="png">PNG</option>
+          <option value="jpeg">JPEG</option>
+        </select>
+      </div>
+      <div class="step">
+        <label for="calendarScaleSelect" data-i18n="export_quality">Export Quality</label>
+        <select id="calendarScaleSelect">
+          <option value="1" data-i18n="quality_standard">Standard (1x)</option>
+          <option value="2" selected data-i18n="quality_high">High (2x)</option>
+          <option value="3" data-i18n="quality_ultra">Ultra (3x)</option>
+        </select>
+      </div>
+      <div class="step">
+        <label class="calendar-checkbox-label">
+          <input type="checkbox" id="calendarShowCounts" checked>
+          <span data-i18n="show_daily_counts">Show daily record count</span>
+        </label>
+      </div>
+      <div class="step">
+        <label class="calendar-checkbox-label">
+          <input type="checkbox" id="calendarShowLegend" checked>
+          <span data-i18n="show_legend">Show legend</span>
+        </label>
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+      <button type="button" data-action="refresh-calendar-preview" data-i18n="refresh_preview">Refresh Preview</button>
+      <button type="button" data-action="export-calendar-image" data-i18n="export_calendar_image">Export Calendar Image</button>
+    </div>
+    <div id="calendarExportWrap" class="calendar-export-wrap" aria-live="polite">
+      <div id="calendarExportPreview" class="calendar-export-preview"></div>
+    </div>
+  </div>
+
   <!-- DTR Exports -->
-  <div class="card export-card">
-    <h2 data-i18n="dtr_exports">DTR Exports</h2>
+  <div class="card export-card" id="exportCard">
+    <div class="card-header">
+      <h2 data-i18n="dtr_exports">DTR Exports</h2>
+      <div class="card-controls">
+        <button class="card-control-btn" data-action="toggle-card" title="Collapse/Expand"><span class="material-symbols-outlined notranslate" translate="no">expand_less</span></button>
+      </div>
+    </div>
     <div class="export-actions">
-      <button onclick="exportPDF()" data-i18n="export_all_pdf">Export All .pdf</button>
-      <button onclick="exportDOCX()" data-i18n="export_all_docx">Export All .docx</button>
-      <button type="button" onclick="exportRecordsJSON()" data-i18n="export_json">Export .json</button>
+      <button data-action="export-pdf" data-i18n="export_all_pdf">Export All .pdf</button>
+      <button data-action="export-docx" data-i18n="export_all_docx">Export All .docx</button>
+      <button type="button" data-action="export-json" data-i18n="export_json">Export .json</button>
+      <button type="button" data-action="export-toml" data-i18n="export_toml">Export .toml</button>
       <span class="export-divider">|</span>
       <label for="exportWeekSelect" class="export-label" data-i18n="week">Week</label>
-      <select id="exportWeekSelect" onchange="updateExportWeekRangeLabel()" title="Choose a week to export" data-i18n-title="choose_week_export">
+      <select id="exportWeekSelect" title="Choose a week to export" data-i18n-title="choose_week_export">
           <option value="all" data-i18n="all_weeks">All Weeks</option>
-        </select>
+      </select>
       <span id="exportWeekRangeLabel" class="export-week-range" aria-live="polite"></span>
-      <button onclick="exportWeeklyPDF()" data-i18n="export_week_pdf">Export Week .pdf</button>
-      <button onclick="exportWeeklyDOCX()" data-i18n="export_week_docx">Export Week .docx</button>
+      <button data-action="export-weekly-pdf" data-i18n="export_week_pdf">Export Week .pdf</button>
+      <button data-action="export-weekly-docx" data-i18n="export_week_docx">Export Week .docx</button>
     </div>
   </div>
 
   <!-- Storage Capacity Visualizer -->
-  <div class="card storage-card">
-    <h2 data-i18n="storage_capacity">Storage Capacity</h2>
+  <div class="card storage-card" id="storageCard">
+    <div class="card-header">
+      <h2 data-i18n="storage_capacity">Storage Capacity</h2>
+      <div class="card-controls">
+        <button class="card-control-btn" data-action="toggle-card" title="Collapse/Expand"><span class="material-symbols-outlined notranslate" translate="no">expand_less</span></button>
+      </div>
+    </div>
     <div id="storageVisualizer" class="storage-visualizer">
       <div class="storage-info">
         <span id="storageUsedText">0.00 MB</span>
@@ -286,7 +503,7 @@
         </div>
         <span id="storageBarTip" class="storage-hover-tip" aria-hidden="true"></span>
       </div>
-      <p id="storageStatus" class="storage-status" data-i18n="calculating">Calculating</p>
+      <p id="storageStatus" class="storage-status" data-i18n="storage_healthy">Storage healthy</p>
       <div id="storageIdbSection" class="storage-idb-section" style="margin-top:12px; padding-top:10px; border-top:1px solid var(--border);">
         <div class="storage-info" style="font-size:0.9em;">
           <span id="storageIdbUsedText">0.00 MB</span>
@@ -300,7 +517,7 @@
           </div>
           <span id="storageIdbBarTip" class="storage-hover-tip" aria-hidden="true"></span>
         </div>
-        <p id="storageIdbStatus" class="storage-status" style="font-size:0.85em; margin-top:4px;" data-i18n="calculating_ellipsis">Calculating...</p>
+        <p id="storageIdbStatus" class="storage-status" style="font-size:0.85em; margin-top:4px;" data-i18n="image_storage_healthy">Image storage healthy</p>
       </div>
       <div class="storage-actions" style="margin-top:10px; display:grid; gap:8px;">
         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
@@ -309,7 +526,7 @@
         </div>
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
           <label style="display:flex; gap:6px; align-items:center; margin:0;">
-            <input type="checkbox" id="storageBatchMode" onchange="toggleStorageBatchMode()">
+            <input type="checkbox" id="storageBatchMode">
             <span data-i18n="batch_processing">Batch processing</span>
           </label>
           <small style="opacity:0.75;" data-i18n="batch_processing_help">Enable to select multiple records below.</small>
@@ -319,25 +536,113 @@
         </div>
       </div>
       <div class="storage-actions">
-        <button type="button" class="storage-action-btn" onclick="transferRecordsToIndexedDB(this)" title="Copy current localStorage DTR records to IndexedDB record store" data-i18n-title="storage_copy_ls_to_idb_title">
+        <button type="button" class="storage-action-btn" data-action="transfer-to-idb" title="Copy current localStorage DTR records to IndexedDB record store" data-i18n-title="storage_copy_ls_to_idb_title">
           <span data-i18n="records_local_to_idb">Records: localStorage to IndexedDB</span>
         </button>
-        <button type="button" class="storage-action-btn" onclick="transferRecordsToLocalStorage(this)" title="Copy IndexedDB DTR records to localStorage backup" data-i18n-title="storage_copy_idb_to_ls_title">
+        <button type="button" class="storage-action-btn" data-action="transfer-to-local" title="Copy IndexedDB DTR records to localStorage backup" data-i18n-title="storage_copy_idb_to_ls_title">
           <span data-i18n="records_idb_to_local">Records: IndexedDB to localStorage</span>
         </button>
-        <button type="button" class="storage-action-btn" onclick="clearDuplicateIndexedDbRecords(this)" title="Remove duplicate IndexedDB records by date (keeps latest entry)" data-i18n-title="storage_remove_idb_dupes_title">
+        <button type="button" class="storage-action-btn" data-action="clear-idb-dupes" title="Remove duplicate IndexedDB records by date (keeps latest entry)" data-i18n-title="storage_remove_idb_dupes_title">
           <span data-i18n="remove_idb_duplicates">Remove IDB Duplicates</span>
         </button>
-        <button type="button" class="storage-action-btn storage-action-btn--accent" onclick="optimizeStorage()" title="Retroactively compress all images to free up space" data-i18n-title="storage_optimize_db_title">
+        <button type="button" class="storage-action-btn storage-action-btn--accent" data-action="optimize-storage" title="Retroactively compress all images to free up space" data-i18n-title="storage_optimize_db_title">
           <span data-i18n="optimize_db">Optimize DB</span>
         </button>
-        <button type="button" class="storage-action-btn" onclick="restoreOptimizedImages(this)" title="Restore optimized images to original quality from IndexedDB backups" data-i18n-title="storage_restore_originals_title">
+        <button type="button" class="storage-action-btn" data-action="restore-optimized" title="Restore optimized images to original quality from IndexedDB backups" data-i18n-title="storage_restore_originals_title">
           <span data-i18n="restore_originals">Restore Originals</span>
         </button>
-        <button type="button" class="btn-destructive" style="width:100%; margin-top:10px; padding: 10px; font-weight: bold; border-radius: 6px;" onclick="hardClearAllData()">
+        <button type="button" class="btn-destructive" style="width:100%; margin-top:10px; padding: 10px; font-weight: bold; border-radius: 6px;" data-action="hard-clear-all-data">
           <span data-i18n="clear_all_data">Clear All Data</span>
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modals -->
+<div id="settingsModal" class="modal" style="display:none;">
+  <div class="modal-content" style="max-width: 540px; position: relative;">
+    <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:2px solid var(--accent); margin-bottom:16px;">
+      <h3 style="margin:0; font-family:var(--font-heading); color:var(--accent); text-transform:uppercase; letter-spacing:1px; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+        <span class="material-symbols-outlined notranslate" translate="no">settings</span>
+        <span data-i18n="settings_title">System Settings</span>
+      </h3>
+      <button data-action="close-settings" style="background:transparent; color:var(--text); border:1px solid var(--border); padding:4px 12px; font-size:12px; border-radius:4px; cursor:pointer;" data-i18n="close">Close</button>
+    </div>
+
+    <!-- Theme Selection -->
+    <div class="settings-section">
+      <h4 class="settings-section-title" data-i18n="theme_selection_title" style="margin: 0 0 10px 0; color: var(--accent); font-family: var(--font-heading); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Theme Selection</h4>
+      <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+        <label for="themeSelect" class="telemetry-label" style="margin:0; opacity:0.85; font-weight:bold;" data-i18n="dtr_theme">Theme</label>
+        <select id="themeSelect" class="telemetry-select" style="flex:1; max-width: 180px;">
+          <option value="f1" data-i18n="theme_formula1">Formula 1</option>
+          <option value="cadillac" data-i18n="theme_cadillac">Cadillac</option>
+          <option value="apx" data-i18n="theme_apx">APX GP</option>
+          <option value="mclaren" data-i18n="theme_mclaren">McLaren</option>
+          <option value="ferrari" data-i18n="theme_ferrari">Ferrari</option>
+          <option value="kiki" data-i18n="theme_kiki">Kiki</option>
+          <option value="ztmy" data-i18n="theme_ztmy">ずとまよ</option>
+        </select>
+        <button id="f1LightToggleBtn" class="telemetry-btn" type="button" data-action="toggle-f1-light" style="display:flex; align-items:center; justify-content:center; padding: 6px 12px; width:44px; height:38px;">
+          <span class="material-symbols-outlined notranslate" translate="no">light_mode</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- UI Customization -->
+    <div class="settings-section" style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
+      <h4 class="settings-section-title" data-i18n="ui_customization" style="margin: 0 0 10px 0; color: var(--accent); font-family: var(--font-heading); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">UI Customization</h4>
+      <div class="step" style="margin-top:8px;">
+        <label for="cardRadiusRange" data-i18n="card_border_radius" style="font-weight:bold;">Card Border Radius</label>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <input type="range" id="cardRadiusRange" min="0" max="30" value="6" style="flex:1; padding:0;">
+          <span id="cardRadiusValue" style="min-width: 40px; font-weight:bold; text-align:right;">6px</span>
+        </div>
+      </div>
+      <div class="step" style="margin-top:12px;">
+        <label style="display:flex; gap:10px; align-items:center; font-weight:normal; cursor:pointer;">
+          <input type="checkbox" id="glassModeToggle">
+          <span data-i18n="glassmorphism_mode">Enable Glassmorphism</span>
+        </label>
+      </div>
+      <div class="step" style="margin-top:12px;">
+        <label style="display:flex; gap:10px; align-items:center; font-weight:normal; cursor:pointer;">
+          <input type="checkbox" id="cardDraggableToggle">
+          <span data-i18n="card_draggable">Enable Card Reordering (Drag & Drop)</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Hardware Telemetry Settings -->
+    <div class="settings-section" style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
+      <h4 class="settings-section-title" data-i18n="hardware_telemetry_settings" style="margin: 0 0 10px 0; color: var(--accent); font-family: var(--font-heading); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Hardware Telemetry Settings</h4>
+      <div class="step" style="margin-top:8px;">
+        <label style="display:flex; gap:10px; align-items:center; font-weight:normal; cursor:pointer;">
+          <input type="checkbox" id="hardwareTelemetryToggle">
+          <span data-i18n="show_hardware_telemetry">Show Hardware Telemetry Card</span>
+        </label>
+      </div>
+      <div class="step" style="margin-top:12px;">
+        <label style="display:flex; gap:10px; align-items:flex-start; font-weight:normal; cursor:pointer;">
+          <input type="checkbox" id="hardwareTelemetryConsentToggle" style="margin-top:2px;">
+          <div>
+            <span style="display:block; font-weight:bold; font-size:0.9rem;" data-i18n="hardware.consent_title">Allow Local Hardware Inspection</span>
+            <small style="opacity:0.75; display:block; font-size:11px; margin-top:2px; line-height:1.4;" data-i18n="hardware.consent_desc">Inspect local GPU, CPU, memory, and FPS. Denying halts all inspection. No data is ever sent to any server.</small>
+          </div>
+        </label>
+      </div>
+    </div>
+
+
+    <!-- Credits Section -->
+    <div class="settings-section settings-credits" style="margin-top:20px; padding:12px; border-top:1px solid var(--border); background:rgba(255,255,255,0.02); border-radius:8px; border: 1px solid var(--border);">
+      <h4 class="settings-section-title" style="font-size:0.8rem; opacity:0.8; margin:0; color: var(--accent); font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 0.5px;" data-i18n="credits_title">System Credits</h4>
+      <p style="margin:6px 0 0 0; font-size:11px; line-height:1.45; opacity:0.75;">
+        <strong>Custom Daily Time Record (DTR) System</strong><br>
+        Version 4.3.0 | Dragonfly Theme Engine<br>
+        Developed with target-based productivity telemetry & Formula 1 delta telemetry styling.
+      </p>
     </div>
   </div>
 </div>
@@ -362,9 +667,9 @@
     </div>
     <p id="jsonPreviewMeta" style="opacity:0.75; font-size:0.85em; margin:10px 0 0 0;"></p>
     <div class="modal-actions" style="border-top:1px solid var(--border); padding-top:15px;">
-      <button type="button" onclick="closeJsonImportPreviewModal()" style="background: transparent; color: var(--text); border: 1px solid var(--border);" data-i18n="cancel">Cancel</button>
-      <button type="button" id="confirmBulkImportBtn" onclick="bulkImportAllRecords()" style="display:none; background:var(--accent); color:#fff; margin-right:8px;" data-i18n="bulk_import_all_records">Bulk Import All Records</button>
-      <button type="button" onclick="confirmJsonImportToForm()" data-i18n="preview_to_form">Preview to Form</button>
+      <button type="button" data-action="close-json-import-modal" style="background: transparent; color: var(--text); border: 1px solid var(--border);" data-i18n="cancel">Cancel</button>
+      <button type="button" id="confirmBulkImportBtn" data-action="bulk-import-all" style="display:none; background:var(--accent); color:#fff; margin-right:8px;" data-i18n="bulk_import_all_records">Bulk Import All Records</button>
+      <button type="button" data-action="confirm-json-import" data-i18n="preview_to_form">Preview to Form</button>
     </div>
   </div>
 </div>
@@ -378,8 +683,8 @@
     <p style="margin:0 0 8px 0;"><strong data-i18n="timezone">Timezone</strong>: <span id="ojtConfirmTimeZone">-</span></p>
     <p style="opacity:0.75; font-size:0.9em;" data-i18n="ojt_apply_help">Applying this will refresh week mapping, graphs, and forecast calculations.</p>
     <div class="modal-actions" style="border-top:1px solid var(--border); padding-top:15px;">
-      <button type="button" onclick="closeOjtConfirmModal()" style="background: transparent; color: var(--text); border: 1px solid var(--border);" data-i18n="cancel">Cancel</button>
-      <button type="button" onclick="confirmSaveOjtTimelineSettings()" data-i18n="confirm">Confirm</button>
+      <button type="button" data-action="close-confirm-modal" style="background: transparent; color: var(--text); border: 1px solid var(--border);" data-i18n="cancel">Cancel</button>
+      <button type="button" data-action="confirm-save-timeline" data-i18n="confirm">Confirm</button>
     </div>
   </div>
 </div>
@@ -457,8 +762,8 @@
     </div>
 
     <div class="modal-actions" style="border-top: 1px solid var(--border); padding-top: 15px;">
-      <button onclick="closeEditModal()" style="background: transparent; color: var(--text); border: 1px solid var(--border);" data-i18n="cancel">Cancel</button>
-      <button type="button" onclick="saveEditModal()" data-i18n="save_changes">Save Changes</button>
+      <button data-action="close-edit-modal" style="background: transparent; color: var(--text); border: 1px solid var(--border);" data-i18n="cancel">Cancel</button>
+      <button type="button" data-action="save-edit-modal" data-i18n="save_changes">Save Changes</button>
     </div>
   </div>
 </div>
@@ -468,12 +773,12 @@
   <div class="modal-content pdf-preview-modal-content">
     <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:2px solid var(--accent); margin-bottom:12px;">
       <h3 id="pdfPreviewTitle" style="margin:0; font-family:var(--font-heading); color:var(--accent); text-transform:uppercase; letter-spacing:1px; font-size:1rem;" data-i18n="pdf_preview">PDF Preview</h3>
-      <button onclick="closePdfPreview()" style="background:transparent; color:var(--text); border:1px solid var(--border); padding:4px 12px; font-size:12px; border-radius:4px; cursor:pointer;" data-i18n="close">Close</button>
+      <button data-action="close-pdf-preview" style="background:transparent; color:var(--text); border:1px solid var(--border); padding:4px 12px; font-size:12px; border-radius:4px; cursor:pointer;" data-i18n="close">Close</button>
     </div>
     <iframe id="pdfPreviewFrame" style="width:100%; height:65vh; border:none; border-radius:6px; background:#fff;"></iframe>
     <div class="modal-actions" style="border-top:1px solid var(--border); padding-top:14px; margin-top:12px;">
-      <button onclick="closePdfPreview()" style="background:transparent; color:var(--text); border:1px solid var(--border);" data-i18n="cancel">Cancel</button>
-      <button id="pdfDownloadBtn" onclick="triggerPdfDownload()" data-i18n="download_pdf">Download PDF</button>
+      <button data-action="close-pdf-preview" style="background:transparent; color:var(--text); border:1px solid var(--border);" data-i18n="cancel">Cancel</button>
+      <button id="pdfDownloadBtn" data-action="download-pdf" data-i18n="download_pdf">Download PDF</button>
     </div>
   </div>
 </div>
@@ -483,7 +788,7 @@
   <div class="modal-content" style="max-width: 760px;">
     <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:2px solid var(--accent); margin-bottom:12px;">
       <h3 style="margin:0; font-family:var(--font-heading); color:var(--accent); text-transform:uppercase; letter-spacing:1px; font-size:1rem;" data-i18n="json_export_preview">JSON Export Preview</h3>
-      <button type="button" onclick="closeJsonExportPreview()" style="background:transparent; color:var(--text); border:1px solid var(--border); padding:4px 12px; font-size:12px; border-radius:4px; cursor:pointer;" data-i18n="close">Close</button>
+      <button type="button" data-action="close-json-export-preview" style="background:transparent; color:var(--text); border:1px solid var(--border); padding:4px 12px; font-size:12px; border-radius:4px; cursor:pointer;" data-i18n="close">Close</button>
     </div>
     <pre id="jsonExportPreviewText" style="margin:0; max-height:58vh; overflow:auto; padding:10px; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--text); font-size:12px; white-space:pre-wrap; word-break:break-word;"></pre>
     <div class="step" style="margin-top:10px; margin-bottom:0;">
@@ -491,42 +796,142 @@
       <input id="jsonExportFileNameInput" type="text" placeholder="DTR_Record_Name_YYYY-MM-DD.json" data-i18n-placeholder="placeholder_export_filename">
     </div>
     <div class="modal-actions" style="border-top:1px solid var(--border); padding-top:14px; margin-top:12px;">
-      <button type="button" onclick="closeJsonExportPreview()" style="background:transparent; color:var(--text); border:1px solid var(--border);" data-i18n="cancel">Cancel</button>
-      <button type="button" onclick="confirmJsonExportDownload()" data-i18n="download_json">Download JSON</button>
+      <button type="button" data-action="close-json-export-preview" style="background:transparent; color:var(--text); border:1px solid var(--border);" data-i18n="cancel">Cancel</button>
+      <button id="confirmJsonExportDownloadBtn" type="button" data-action="confirm-json-export-download" data-i18n="download_json">Download JSON</button>
     </div>
   </div>
 </div>
 
-<!-- jsPDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Clear All Data Options Modal -->
+<div id="clearAllDataModal" class="modal" style="display:none;">
+  <div class="modal-content clear-all-data-modal-content" style="position: relative;">
+    <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:2px solid var(--accent); margin-bottom:14px;">
+      <h3 style="margin:0; font-family:var(--font-heading); color:var(--accent); text-transform:uppercase; letter-spacing:1px; font-size:1.05rem; display:flex; align-items:center; gap:8px;">
+        <span class="material-symbols-outlined notranslate" translate="no" style="color:var(--accent);">delete_forever</span>
+        <span data-i18n="clear_all_data_modal_title">Clear All Data</span>
+      </h3>
+      <button type="button" data-action="close-clear-all-data-modal" style="background:transparent; color:var(--text); border:1px solid var(--border); padding:4px 12px; font-size:12px; border-radius:4px; cursor:pointer;" data-i18n="close">Close</button>
+    </div>
+    <p style="margin:0 0 14px 0; font-size:0.9rem; opacity:0.85; line-height:1.4;" data-i18n="clear_all_data_modal_desc">
+      Choose how to clear your data:
+    </p>
 
-<!-- FileSaver (needed for docx) -->
+    <!-- Option Selection Cards -->
+    <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:18px;">
+      <!-- Option 1: Keep in Archives -->
+      <div class="clear-data-option-card active" data-action="select-clear-data-option" data-option="keep-archives" role="button" tabindex="0" aria-pressed="true">
+        <span class="clear-data-indicator-dot"></span>
+        <div class="clear-data-option-content">
+          <div class="clear-data-option-title">
+            <span class="material-symbols-outlined notranslate" translate="no" style="font-size:18px; color:var(--accent);">inventory_2</span>
+            <span data-i18n="clear_option_keep_archives_title">Keep Data in Archives</span>
+          </div>
+          <p class="clear-data-option-desc" data-i18n="clear_option_keep_archives_desc">
+            Saves active records to archives and keeps past history safe. Clears active timeline.
+          </p>
+        </div>
+      </div>
+
+      <!-- Option 2: Completely Delete Altogether -->
+      <div class="clear-data-option-card" data-action="select-clear-data-option" data-option="delete-altogether" role="button" tabindex="0" aria-pressed="false">
+        <span class="clear-data-indicator-dot"></span>
+        <div class="clear-data-option-content">
+          <div class="clear-data-option-title" style="color:var(--accent, #e10600);">
+            <span class="material-symbols-outlined notranslate" translate="no" style="font-size:18px;">warning</span>
+            <span data-i18n="clear_option_delete_all_title">Completely Delete Altogether</span>
+          </div>
+          <p class="clear-data-option-desc" data-i18n="clear_option_delete_all_desc">
+            Permanently wipes all records, images, archives, and settings. Cannot be undone.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions" style="border-top:1px solid var(--border); padding-top:14px; display:flex; justify-content:flex-end; gap:10px;">
+      <button type="button" data-action="close-clear-all-data-modal" style="background:transparent; color:var(--text); border:1px solid var(--border); padding:7px 16px; border-radius:6px; cursor:pointer;" data-i18n="cancel">Cancel</button>
+      <button type="button" id="confirmClearAllDataBtn" data-action="execute-clear-all-data" class="storage-action-btn storage-action-btn--accent" style="padding:7px 18px; font-weight:bold; border-radius:6px; cursor:pointer; background:var(--accent); color:#ffffff;" data-i18n="clear_data_keep_archives_btn">
+        Clear &amp; Keep Archives
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Archive Viewer Modal -->
+<div id="archiveViewerModal" class="modal" style="display:none;">
+  <div class="modal-content archive-modal-content" style="max-width: 860px; max-height: 90vh; display: flex; flex-direction: column;">
+    <!-- Modal Header -->
+    <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:2px solid var(--accent); margin-bottom:14px;">
+      <h3 style="margin:0; font-family:var(--font-heading); color:var(--accent); text-transform:uppercase; letter-spacing:1px; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+        <span class="material-symbols-outlined notranslate" translate="no">inventory_2</span>
+        <span data-i18n="archive.modal_title">DTR Record Archives</span>
+      </h3>
+      <button type="button" data-action="close-archive-viewer" style="background:transparent; color:var(--text); border:1px solid var(--border); padding:4px 12px; font-size:12px; border-radius:4px; cursor:pointer;" data-i18n="close">Close</button>
+    </div>
+
+    <!-- Snapshot Selector & Action Bar -->
+    <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:14px; display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:260px;">
+          <label for="archiveSnapshotSelect" style="margin:0; font-size:12px; font-weight:bold; opacity:0.85; white-space:nowrap;" data-i18n="archive.select_snapshot">Snapshot:</label>
+          <select id="archiveSnapshotSelect" class="telemetry-select" style="flex:1;" data-action="change-archive-snapshot"></select>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <button type="button" class="telemetry-btn" data-action="manual-archive-live" style="font-size:11px; padding:6px 12px;" title="Save current live records to archive without clearing">
+            <span class="material-symbols-outlined notranslate" translate="no" style="font-size:14px;">archive</span>
+            <span data-i18n="archive.manual_archive_btn">Archive Live</span>
+          </button>
+          <button type="button" id="archiveRestoreBtn" class="telemetry-btn" data-action="restore-archive-snapshot" style="font-size:11px; padding:6px 12px;" title="Restore this snapshot to your active timeline">
+            <span class="material-symbols-outlined notranslate" translate="no" style="font-size:14px;">restore</span>
+            <span data-i18n="archive.restore_btn">Restore</span>
+          </button>
+          <button type="button" id="archiveExportBtn" class="telemetry-btn" data-action="export-archive-snapshot" style="font-size:11px; padding:6px 12px;" title="Export snapshot to JSON">
+            <span class="material-symbols-outlined notranslate" translate="no" style="font-size:14px;">download</span>
+            <span data-i18n="archive.export_btn">Export</span>
+          </button>
+          <button type="button" id="archiveDeleteBtn" class="telemetry-btn btn-destructive" data-action="delete-archive-snapshot" style="font-size:11px; padding:6px 12px; color:#ffffff !important;" title="Delete this archived snapshot">
+            <span class="material-symbols-outlined notranslate" translate="no" style="font-size:14px; color:#ffffff !important;">delete</span>
+            <span data-i18n="delete" style="color:#ffffff !important;">Delete</span>
+          </button>
+        </div>
+      </div>
+      <div id="archiveSnapshotMeta" style="font-size:11px; opacity:0.75; font-family:var(--font-body);"></div>
+    </div>
+
+    <!-- View Mode Tabs (Daily / Weekly / Monthly) -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:8px;">
+      <div class="archive-tabs" style="display:flex; gap:6px;">
+        <button type="button" class="telemetry-btn archive-tab-btn active" data-action="switch-archive-tab" data-archive-view="daily" style="font-size:12px; padding:6px 14px;">
+          <span class="material-symbols-outlined notranslate" translate="no" style="font-size:15px;">calendar_view_day</span>
+          <span data-i18n="archive.tab_daily">Daily View</span>
+        </button>
+        <button type="button" class="telemetry-btn archive-tab-btn" data-action="switch-archive-tab" data-archive-view="weekly" style="font-size:12px; padding:6px 14px;">
+          <span class="material-symbols-outlined notranslate" translate="no" style="font-size:15px;">calendar_view_week</span>
+          <span data-i18n="archive.tab_weekly">Weekly View</span>
+        </button>
+        <button type="button" class="telemetry-btn archive-tab-btn" data-action="switch-archive-tab" data-archive-view="monthly" style="font-size:12px; padding:6px 14px;">
+          <span class="material-symbols-outlined notranslate" translate="no" style="font-size:15px;">calendar_view_month</span>
+          <span data-i18n="archive.tab_monthly">Monthly View</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Scrollable Archive Records Content -->
+    <div id="archiveContentContainer" style="flex:1; overflow-y:auto; padding-right:4px; max-height:55vh;"></div>
+  </div>
+</div>
+
+<!-- External CDN Libraries (for PDF & DOCX generation) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-<!-- Core Logic & Helpers -->
-<script src="scripts/theme-sync.js"></script>
-<script src="scripts/store.js"></script>
-<script src="scripts/dtr-core.js"></script>
+<!-- Central Application Entry Point -->
+<script type="module" src="src/main.ts"></script>
 
-<script src="scripts/dtr-image-store.js"></script>
-<!-- Logic Modules -->
-<script src="scripts/dtr-storage.js"></script>
-<script src="scripts/dtr-storage-aux.js"></script>
-<script src="scripts/dtr-ui.js"></script>
-<script src="scripts/dtr-ui-aux.js"></script>
-<script src="scripts/dtr-graphs.js"></script>
-<script src="scripts/dtr-exports.js"></script>
-<!-- Main Controller -->
-<script src="scripts/dtr-i18n.js"></script>
-<script src="scripts/script.js"></script>
-<script>
-  window.addEventListener("DOMContentLoaded", () => {
-    if (window.DTRI18N && typeof window.DTRI18N.bootstrap === "function") {
-      window.DTRI18N.bootstrap();
-    }
-  });
-</script>
+  <footer style="text-align:center; margin-top:40px; padding:20px; opacity:0.35; font-size:11px; font-family:var(--font-heading); letter-spacing:1px; text-transform:uppercase;">
+    <p>v 4.3.0 | Dragonfly</p>
+  </footer>
 
 </body>
 </html>

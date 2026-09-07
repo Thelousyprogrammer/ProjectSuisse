@@ -1,0 +1,204 @@
+.calendar-export-card {
+  --calendar-fill-present: rgba(0, 255, 0, 0.15);
+  --calendar-fill-absent: rgba(255, 0, 0, 0.15);
+  --calendar-fill-holiday: rgba(255, 255, 255, 0.15);
+  --calendar-fill-present-holiday: rgba(var(--accent-rgb, 255, 30, 0), 0.2);
+  --calendar-border-present: rgba(0, 255, 0, 0.4);
+  --calendar-border-absent: rgba(255, 0, 0, 0.4);
+  --calendar-border-holiday: rgba(255, 255, 255, 0.4);
+  --calendar-border-present-holiday: rgba(var(--accent-rgb, 255, 30, 0), 0.5);
+  --calendar-swatch-present: rgba(0, 255, 0, 0.6);
+  --calendar-swatch-absent: rgba(255, 0, 0, 0.6);
+  --calendar-swatch-holiday: rgba(255, 255, 255, 0.6);
+  --calendar-swatch-present-holiday: rgba(var(--accent-rgb, 255, 30, 0), 0.7);
+}
+
+[data-theme="cadillac"] .calendar-export-card {
+  --calendar-fill-present: rgba(44, 40, 232, 0.2);
+  --calendar-fill-absent: rgba(200, 0, 43, 0.2);
+  --calendar-fill-holiday: rgba(232, 176, 30, 0.2);
+}
+
+[data-theme="apx"] .calendar-export-card {
+  --calendar-fill-present: rgba(0, 255, 0, 0.2);
+  --calendar-fill-absent: rgba(255, 68, 68, 0.2);
+  --calendar-fill-holiday: rgba(255, 0, 255, 0.2);
+}
+
+[data-theme="kiki"] .calendar-export-card {
+  --calendar-fill-present: rgba(81, 134, 98, 0.2);
+  --calendar-fill-absent: rgba(225, 91, 73, 0.2);
+  --calendar-fill-holiday: rgba(213, 206, 140, 0.2);
+}
+
+[data-theme="ferrari"] .calendar-export-card {
+  --calendar-fill-present: rgba(255, 255, 255, 0.2);
+  --calendar-fill-absent: rgba(255, 228, 63, 0.2);
+  --calendar-fill-holiday: rgba(213, 46, 55, 0.2);
+}
+
+.calendar-export-card .subtitle {
+  margin-bottom: 10px;
+}
+
+.calendar-export-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.calendar-export-controls .step {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.calendar-export-controls .step select,
+.calendar-export-controls .step input[type="text"] {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+  line-height: 1.2;
+}
+
+.calendar-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  user-select: none;
+}
+
+.calendar-export-wrap {
+  margin-top: 12px;
+  overflow-x: auto;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--panel);
+}
+
+.calendar-export-preview {
+  min-width: 720px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  color: var(--text);
+}
+
+.calendar-export-title {
+  margin: 0;
+  color: var(--accent);
+  font-size: 1.1rem;
+  letter-spacing: 0.5px;
+}
+
+.calendar-export-subtitle {
+  margin: 5px 0 12px 0;
+  opacity: 0.82;
+  font-size: 0.9rem;
+}
+
+.calendar-grid-head,
+.calendar-grid-body {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.calendar-grid-head {
+  margin-bottom: 6px;
+}
+
+.calendar-grid-head div {
+  text-align: center;
+  font-size: 0.77rem;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.calendar-day-cell {
+  position: relative;
+  min-height: 72px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.calendar-day-cell.calendar-day-empty {
+  opacity: 0.34;
+}
+
+.calendar-day-cell .day-number {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.calendar-day-cell .day-status {
+  font-size: 0.72rem;
+  opacity: 0.95;
+}
+
+.calendar-day-cell .day-record-count {
+  font-size: 0.73rem;
+  opacity: 0.9;
+}
+
+.calendar-day-cell .day-holiday-name {
+  margin-top: auto;
+  font-size: 0.68rem;
+  line-height: 1.1;
+  opacity: 0.9;
+}
+
+.calendar-day-present {
+  background: var(--calendar-fill-present);
+  border-color: var(--calendar-border-present);
+}
+
+.calendar-day-absent {
+  background: var(--calendar-fill-absent);
+  border-color: var(--calendar-border-absent);
+}
+
+.calendar-day-holiday {
+  background: var(--calendar-fill-holiday);
+  border-color: var(--calendar-border-holiday);
+}
+
+.calendar-day-present-holiday {
+  background: var(--calendar-fill-present-holiday);
+  border-color: var(--calendar-border-present-holiday);
+}
+
+.calendar-export-legend {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.calendar-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+}
+
+.calendar-legend-swatch {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+.calendar-swatch-present { background: var(--calendar-swatch-present); }
+.calendar-swatch-absent { background: var(--calendar-swatch-absent); }
+.calendar-swatch-holiday { background: var(--calendar-swatch-holiday); }
+.calendar-swatch-present-holiday { background: var(--calendar-swatch-present-holiday); }

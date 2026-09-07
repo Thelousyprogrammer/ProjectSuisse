@@ -32,9 +32,12 @@
   --lcd-border: 1px solid rgba(255, 255, 255, 0.1);
 
   /* global fallback font */
-  --font-body: "JetBrains Mono Nerd Font", "Noto Sans", monospace;
-  --font-heading: "JetBrains Mono Nerd Font", "Noto Sans", monospace;
+  --font-fallback: "Noto Sans", "Noto Sans JP", "Noto Sans SC", "Noto Sans TC", "Noto Sans HK", sans-serif;
+  --font-body: "JetBrains Mono Nerd Font", var(--font-fallback);
+  --font-heading: "JetBrains Mono Nerd Font", var(--font-fallback);
+  --panel: #1f1f2a;
   --led-glow: 0 0 10px var(--accent);
+  --theme-switch-logo: url('../favicons/F1Favicon.svg');
 }
 
 /* 2. Cadillac Overrides */
@@ -50,11 +53,14 @@
   --color-low: var(--level-1);
   --color-empty: var(--level-0);
 
-  /* JS Readability Fix */
   --color-neutral: #a0a0a0;
   --color-warning: var(--level-1);
   --color-good: var(--level-2);
   --color-excellent: var(--level-3);
+
+  --bg-rgb: 51, 51, 51;
+  --accent-rgb: 232, 176, 30;
+  --theme-switch-logo: url('../favicons/CaddyFavicon.svg');
 }
 
 /* 3. APX Overrides */
@@ -68,6 +74,7 @@
   --color-warning: var(--level-1);
   --color-good: var(--level-2);
   --color-excellent: var(--level-3);
+  --theme-switch-logo: url('../favicons/APXFavicon.svg');
 }
 
 /* ==========================================
@@ -109,8 +116,8 @@
   --border: #ff1e00;
   
   /* Fonts */
-  --font-heading: "KH Interference", sans-serif;
-  --font-body: "Formula1 Display", sans-serif;
+  --font-heading: "KH Interference", var(--font-fallback);
+  --font-body: "Formula1 Display", var(--font-fallback);
 
   /* Level Colors (Scaled from Accent) */
   --level-0: #333333;
@@ -128,6 +135,10 @@
   --chart-grid: rgba(255, 255, 255, 0.05);
   --chart-fill: rgba(255, 30, 0, 0.2);
   --chart-ideal: rgba(255, 255, 255, 0.2);
+
+  --bg-rgb: 21, 21, 30;
+  --accent-rgb: 255, 30, 0;
+  --theme-switch-logo: url('../favicons/F1Favicon.svg');
 }
 
 [data-theme="f1-light"] {
@@ -137,8 +148,8 @@
   --accent: #d71800;
   --border: #e85a48;
 
-  --font-heading: "KH Interference", sans-serif;
-  --font-body: "Formula1 Display", sans-serif;
+  --font-heading: "KH Interference", var(--font-fallback);
+  --font-body: "Formula1 Display", var(--font-fallback);
 
   --level-0: #d9dde8;
   --level-1: #c07d00;
@@ -153,6 +164,10 @@
   --chart-grid: rgba(23, 26, 36, 0.1);
   --chart-fill: rgba(215, 24, 0, 0.15);
   --chart-ideal: rgba(23, 26, 36, 0.2);
+
+  --bg-rgb: 247, 248, 252;
+  --accent-rgb: 215, 24, 0;
+  --theme-switch-logo: url('../favicons/F1Favicon.svg');
 }
 
 [data-theme="f1-light"] body {
@@ -161,11 +176,13 @@
 
 [data-theme="f1-light"] .btn-destructive {
     background: #d71800;
+    color: #ffffff !important;
     border: none;
 }
 
 [data-theme="f1"] .btn-destructive {
     background: #ff1e00; /* F1 Red */
+    color: #ffffff !important;
     border: none;
 }
 
@@ -209,6 +226,7 @@
     /* Foundation */
     --bg: #282828;           /* Gray 1 */
     --surface: #505050;      /* Gray 2 */
+    --panel: #282828;        /* Solid dark charcoal */
     --border: #787878;       /* Gray 3 */
     --text-dim: #a0a0a0;     /* Gray 4 */
     --text: #ffffff;         /* White */
@@ -267,12 +285,15 @@
 [data-theme="cadillac"] .card,
 [data-theme="cadillac"] .stat-card,
 [data-theme="cadillac"] .telemetry-card,
-[data-theme="cadillac"] .chart-container {
+[data-theme="cadillac"] .chart-container,
+[data-theme="cadillac"] .modal-content,
+[data-theme="cadillac"] .archive-modal-content {
     background-color: #282828 !important; /* Matches --bg */
     background-image: none !important;
     opacity: 1 !important;
     border: 1px solid var(--border) !important;
     backdrop-filter: none !important; /* Removes any blur that causes lag */
+    color: var(--text) !important;
 }
 
 /* Ensure text remains visible on the solid background */
@@ -281,9 +302,10 @@
     color: var(--text) !important;
 }
 
-/* Accent top-border for Cadillac Cards */
+/* Accent top-border for Cadillac Cards & Modals */
 [data-theme="cadillac"] .card::before,
-[data-theme="cadillac"] .stat-card::before {
+[data-theme="cadillac"] .stat-card::before,
+[data-theme="cadillac"] .modal-content::before {
     content: "";
     position: absolute;
     top: 0; left: 0; right: 0;
@@ -295,12 +317,21 @@
 /* Default buttons (Gold) */
 [data-theme="cadillac"] button:not([class*="btn-theme-"]) {
     background: linear-gradient(to bottom, var(--accent), var(--accent-dark));
-    color: var(--black); font-weight: 700; border: 1px solid var(--accent-light);
+    color: var(--black) !important; font-weight: 700; border: 1px solid var(--accent-light);
+}
+
+[data-theme="cadillac"] button:not([class*="btn-theme-"]) * {
+    color: var(--black) !important;
 }
 
 [data-theme="cadillac"] button:not([class*="btn-theme-"]):hover {
     background: var(--accent-light) !important;
+    color: var(--black) !important;
     box-shadow: 0 0 15px rgba(232, 176, 30, 0.4) !important;
+}
+
+[data-theme="cadillac"] button:not([class*="btn-theme-"]):hover * {
+    color: var(--black) !important;
 }
 
 /* Destructive/Form Buttons (Red) */
@@ -384,6 +415,7 @@
     /* Foundation */
     --bg: var(--apx-black);
     --surface: var(--apx-gray); /* Gray 2 equivalent for solid cards */
+    --panel: #0a0a0a;           /* Solid tech black */
     --text: var(--apx-white);
     --text-dim: #888888;
     --border: var(--apx-gold);
@@ -414,8 +446,11 @@
     --chart-fill: rgba(255, 255, 255, 0.05);
 
     /* Fonts */
-    --font-heading: "UAV OSD Sans", monospace;
-    --font-body: "Jet Brains Mono", monospace;
+    --font-heading: "UAV OSD Sans", var(--font-fallback);
+    --font-body: "Jet Brains Mono", var(--font-fallback);
+
+    --bg-rgb: 0, 0, 0;
+    --accent-rgb: 203, 177, 69;
 }
 
 /* Restoring the APX Tech-Weave Background */
@@ -431,10 +466,12 @@
     background-attachment: fixed;
 }
 
-/* Force APX Cards to be solid and have a tech-border */
+/* Force APX Cards & Modals to be solid and have a tech-border */
 [data-theme="apx"] .card,
 [data-theme="apx"] .stat-card,
-[data-theme="apx"] .telemetry-card {
+[data-theme="apx"] .telemetry-card,
+[data-theme="apx"] .modal-content,
+[data-theme="apx"] .archive-modal-content {
     background: #0a0a0a !important; 
     border: 1px solid var(--apx-gold) !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 
@@ -450,9 +487,13 @@
 }
 
 [data-theme="apx"] button:not([class*="btn-theme-"]):hover {
-    background: var(--apx-gold);
-    color: black;
-    box-shadow: 0 0 15px var(--apx-gold);
+    background: var(--apx-gold) !important;
+    color: black !important;
+    box-shadow: 0 0 15px var(--apx-gold) !important;
+}
+
+[data-theme="apx"] button:not([class*="btn-theme-"]):hover * {
+    color: black !important;
 }
 
 /* ==========================================
@@ -478,8 +519,8 @@
     --sec: #cf6436;
     --tri: #654e31;
 
-    --font-heading: "Harrington Local", "Harrington", "Georgia", serif;
-    --font-body: "Harrington Local", "Harrington", "Trebuchet MS", serif;
+    --font-heading: "Harrington Local", "Harrington", "Georgia", var(--font-fallback);
+    --font-body: "Harrington Local", "Harrington", "Trebuchet MS", var(--font-fallback);
 
     --color-neutral: #d5ce8c;
     --color-warning: #e15b49;
@@ -494,19 +535,26 @@
     --chart-grid: rgba(213, 206, 140, 0.18);
     --chart-fill: rgba(207, 100, 54, 0.24);
     --chart-ideal: rgba(81, 134, 98, 0.35);
+
+    --bg-rgb: 101, 78, 49;
+    --accent-rgb: 213, 206, 140;
+    --theme-switch-logo: url('../favicons/KikiFavicon.svg');
 }
 
 [data-theme="kiki"] body {
-    background: url("https://static.wikia.nocookie.net/studio-ghibli/images/d/d4/Kiki%27s_Delivery_Service_-_Kiki_at_store.jpg/revision/latest/scale-to-width-down/1000?cb=20200326173354") center/cover fixed no-repeat;
+    background: url('../favicons/kiki-bg.jpg') center/cover fixed no-repeat;
 }
 
 [data-theme="kiki"] .card,
 [data-theme="kiki"] .stat-card,
 [data-theme="kiki"] .telemetry-card,
-[data-theme="kiki"] .chart-container {
-    background: var(--panel) !important;
+[data-theme="kiki"] .chart-container,
+[data-theme="kiki"] .modal-content,
+[data-theme="kiki"] .archive-modal-content {
+    background: #402f1f !important;
     border: 1px solid rgba(213, 206, 140, 0.55) !important;
-    backdrop-filter: blur(2px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    color: var(--text);
 }
 
 [data-theme="kiki"] h1,
@@ -564,6 +612,7 @@
     /* Foundation */
     --bg: var(--ferrari-black);
     --surface: #1a1a1a;
+    --panel: #0a0a0a;
     --text: var(--ferrari-white);
     --text-dim: #cccccc;
     --border: var(--ferrari-yellow);
@@ -597,8 +646,12 @@
     --ferrari-bg-light: rgba(var(--ferrari-red-rgb), 0.18);
 
     /* Fonts */
-    --font-heading: "Ferro Rosso", sans-serif;
-    --font-body: "Jet Brains Mono", sans-serif;
+    --font-heading: "Ferro Rosso", var(--font-fallback);
+    --font-body: "Jet Brains Mono", var(--font-fallback);
+
+    --bg-rgb: 0, 0, 0;
+    --accent-rgb: 213, 46, 55;
+    --theme-switch-logo: url('../favicons/FerrariFavicon.svg');
 }
 
 /* Ferrari Body & Cards */
@@ -636,7 +689,9 @@
 [data-theme="ferrari"] .card,
 [data-theme="ferrari"] .stat-card,
 [data-theme="ferrari"] .telemetry-card,
-[data-theme="ferrari"] .chart-container {
+[data-theme="ferrari"] .chart-container,
+[data-theme="ferrari"] .modal-content,
+[data-theme="ferrari"] .archive-modal-content {
     background: #0a0a0a !important;
     border: 2px solid var(--surface) !important;
     box-shadow: 0 0 20px rgba(213, 46, 55, 0.2);
@@ -647,9 +702,10 @@
     background-image: none !important;
 }
 
-/* Ferrari Accent line on cards */
+/* Ferrari Accent line on cards & modals */
 [data-theme="ferrari"] .card::before,
-[data-theme="ferrari"] .stat-card::before {
+[data-theme="ferrari"] .stat-card::before,
+[data-theme="ferrari"] .modal-content::before {
     content: "";
     position: absolute;
     top: 0;
@@ -705,6 +761,10 @@
     background: var(--accent-light) !important;
     color: var(--ferrari-black) !important;
     box-shadow: 0 0 20px rgba(213, 46, 55, 0.6) !important;
+}
+
+[data-theme="ferrari"] button:not([class*="btn-theme-"]):hover * {
+    color: var(--ferrari-black) !important;
 }
 
 [data-theme="ferrari"] .btn-destructive {
@@ -809,8 +869,8 @@
     --panel: #111; /* dark panel fallback */
 
     /* Fonts */
-    --font-heading: "Space Grotesk", sans-serif;
-    --font-body: "Space Grotesk", sans-serif;
+    --font-heading: "Space Grotesk", var(--font-fallback);
+    --font-body: "Space Grotesk", var(--font-fallback);
 
     /* Telemetry levels/colors */
     --level-0: #000000;
@@ -831,6 +891,8 @@
     --mclaren-grid-rgb: 239, 135, 51;
     --mclaren-grid-alpha: 0.26;
 
+    --bg-rgb: 0, 0, 0;
+    --accent-rgb: 239, 135, 51;
     opacity: 1;
 }
 
@@ -862,6 +924,15 @@
         transparent
       ) !important;
     background-size: 55px 55px !important;
+}
+
+/* McLaren Modals */
+[data-theme="mclaren"] .modal-content,
+[data-theme="mclaren"] .archive-modal-content {
+    background: #111111 !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: 0 0 25px rgba(239, 135, 51, 0.25);
+    color: var(--text);
 }
 
 /* McLaren button styling */
@@ -918,8 +989,11 @@
   --chart-aux: #d8b5a2;
 
   /* Typography */
-  --font-heading: 'JetBrains Mono Nerd Font', 'Space Grotesk', monospace;
-  --font-body: 'JetBrains Mono Nerd Font', monospace;
+  --font-heading: 'JetBrains Mono Nerd Font', 'Space Grotesk', var(--font-fallback);
+  --font-body: 'JetBrains Mono Nerd Font', var(--font-fallback);
+
+  --bg-rgb: 0, 0, 0;
+  --accent-rgb: 142, 110, 186;
 }
 
 [data-theme="ztmy"] body {
@@ -934,12 +1008,15 @@
 [data-theme="ztmy"] .card,
 [data-theme="ztmy"] .stat-card,
 [data-theme="ztmy"] .telemetry-card,
-[data-theme="ztmy"] .chart-container {
-  background: var(--surface) !important;
+[data-theme="ztmy"] .chart-container,
+[data-theme="ztmy"] .modal-content,
+[data-theme="ztmy"] .archive-modal-content {
+  background: #0c0d12 !important;
   border: 1px solid var(--ztmy-purple) !important;
   box-shadow: 0 0 15px rgba(142, 110, 186, 0.15);
   position: relative;
   overflow: hidden;
+  color: var(--text);
 }
 
 [data-theme="ztmy"] .card::before {
@@ -969,9 +1046,13 @@
 }
 
 [data-theme="ztmy"] button:not([class*="btn-theme-"]):hover {
-  background: var(--ztmy-purple);
-  color: var(--ztmy-black);
-  box-shadow: 0 0 20px rgba(142, 110, 186, 0.4);
+  background: var(--ztmy-purple) !important;
+  color: var(--ztmy-black) !important;
+  box-shadow: 0 0 20px rgba(142, 110, 186, 0.4) !important;
+}
+
+[data-theme="ztmy"] button:not([class*="btn-theme-"]):hover * {
+  color: var(--ztmy-black) !important;
 }
 
 [data-theme="ztmy"] .btn-destructive {

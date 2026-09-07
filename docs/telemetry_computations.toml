@@ -1,0 +1,157 @@
+# Telemetry Computations & Logic Flow
+# Project: customDTR | Dragonfly
+
+[telemetry]
+version = "4.3.0"
+codename = "Dragonfly"
+description = "Technical computations, rules, and mathematical models for DTR Telemetry"
+
+[charts.cumulative_progress]
+name = "Cumulative Progress vs Goal"
+type = "Line Chart"
+description = "Tracks the cumulative hours logged versus the projected pace."
+variables = [
+    "t = current date index in timeline",
+    "k = projected workdays ahead",
+    "hours = hours on record i",
+    "pace = selected/estimated daily pace (hours/day)"
+]
+logic_flow = [
+    "1. Calculate daily cumulative sum of hours.",
+    "2. Calculate target baseline using `pace * t`.",
+    "3. Plot historical line against projected target line."
+]
+
+[charts.session_delta]
+name = "Session Delta"
+type = "Bar Chart"
+description = "Measures daily over/under target performance against the baseline."
+variables = [
+    "delta_i = daily over/under target for day i",
+    "baseline = baseline target used by the chart (usually 8h)"
+]
+logic_flow = [
+    "1. Calculate `hours - baseline` for each logged session.",
+    "2. Positive values indicate over-performance (Green).",
+    "3. Negative values indicate under-performance (Red/Orange)."
+]
+
+[charts.radar_velocity]
+name = "Day-of-Week Velocity"
+type = "Radar Chart"
+description = "Analyzes the average hours logged per weekday."
+variables = [
+    "weekday = weekday bucket (Mon..Sat)",
+    "hours_on_d = total hours logged on weekday d",
+    "count_d = number of entries for weekday d"
+]
+logic_flow = [
+    "1. Group all records by weekday.",
+    "2. Calculate average: `hours_on_d / count_d`.",
+    "3. Plot the radar polygon to identify high-productivity days."
+]
+
+[charts.productivity_matrix]
+name = "Performance Matrix"
+type = "Bubble Chart"
+description = "Correlates Identity Score with Session Impact."
+variables = [
+    "impact = (Accomplishments / Hours)",
+    "identity_score = identity score for entry i",
+    "bubble_size = relative session duration"
+]
+logic_flow = [
+    "1. Map X-axis to Identity Score (0-5).",
+    "2. Map Y-axis to Calculated Impact.",
+    "3. Map Bubble Size to total session hours."
+]
+
+[charts.candlestick_momentum]
+name = "Weekly Delta Momentum"
+type = "Candlestick Chart"
+description = "Shows the momentum and volatility of daily deltas across a week."
+variables = [
+    "week_bucket = selected week bucket",
+    "open_close = first/last delta of week w",
+    "high_low = highest/lowest delta in week w"
+]
+logic_flow = [
+    "1. Group daily deltas by week.",
+    "2. Determine Open (Monday delta) and Close (Saturday/last delta).",
+    "3. Determine High (max delta) and Low (min delta).",
+    "4. Render wick (High/Low) and body (Open/Close)."
+]
+
+[charts.identity_alignment]
+name = "Identity Alignment"
+type = "Line/Area Chart"
+description = "Tracks the user's subjective alignment score over time."
+variables = [
+    "identity_score = identity score for entry i",
+    "count_w = entries in week w with valid identity score",
+    "guide_line = reference guide line (e.g., 4.0)"
+]
+logic_flow = [
+    "1. Average the identity scores per week.",
+    "2. Compare against a target reference guide line (e.g., 4.0)."
+]
+
+[charts.energy_zones]
+name = "Energy Zones"
+type = "Bar Chart (Horizontal)"
+description = "Categorizes sessions into workload intensity zones."
+variables = [
+    "zone_rule = Each record maps to one zone based on rule priority order",
+    "total_hours = OJT hours + personal project hours"
+]
+logic_flow = [
+    "1. Calculate total session load: `OJT hours + personal hours`.",
+    "2. Overdrive: > 9h total.",
+    "3. Elite: >= 8h OJT AND >= 1h Personal.",
+    "4. Solid: >= 8h OJT.",
+    "5. Survival: >= 6h OJT.",
+    "6. Recovery: Days with no logs (gaps) or under threshold."
+]
+
+[charts.weekly_effort]
+name = "Weekly Effort Trend"
+type = "Stacked Bar Chart"
+description = "Shows the breakdown of OJT and Personal hours across weeks."
+variables = [
+    "ojt_hours = OJT hours for a week",
+    "personal_hours = personal project hours for a week"
+]
+logic_flow = [
+    "1. Group records by week number.",
+    "2. Sum OJT hours and Personal hours separately.",
+    "3. Render stacked bars to show total weekly workload capacity."
+]
+
+[rules.semester_cutoff]
+name = "Semester End Date Hard Boundary"
+description = "Hard cutoff boundary for both live session data logging and telemetry computations."
+variables = [
+    "semester_end_date = user-configured end of semester date (YYYY-MM-DD)",
+    "today = current date key in GMT+8 / configured timezone",
+    "effective_deadline = explicitly provided deadline or semester_end_date"
+]
+logic_flow = [
+    "1. Session Input Boundary: DTR dates beyond semester_end_date are blocked (input date max bound = semester_end_date).",
+    "2. Telemetry Ingestion Cutoff: In fetchTelemetryData(), any logs past semester_end_date are filtered out from active telemetry calculations.",
+    "3. Forecast & Trajectory: Projections, remaining workdays, and required pace cap strictly at effective_deadline.",
+    "4. Post-Cutoff Finalization: If today >= semester_end_date, workDaysRemaining is 0 and status badge declares telemetry recording stopped."
+]
+
+[rules.archival_system]
+name = "IndexedDB Archival Protocol"
+description = "Immutable snapshot storage in IndexedDB archived_records store prior to destructive operations or upon manual trigger."
+variables = [
+    "archived_records = IndexedDB store for historical backups",
+    "snapshot = object containing id, archivedAt timestamp, reason, recordCount, and records list"
+]
+logic_flow = [
+    "1. Auto-Archival: Before clear_all_records, timeline start date change wipes, or record replacements, the live records are preserved in archived_records.",
+    "2. Manual Snapshot: Users can create point-in-time snapshots anytime via Archive Live in Archive Viewer.",
+    "3. Aggregated Views: Historical data is rendered in Daily (itemized), Weekly (OJT week totals/averages), or Monthly (calendar month progress) modes.",
+    "4. Zero-Loss Restore: Restoring an archive snapshot automatically backs up current live state first."
+]

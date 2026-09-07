@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="week_comparison.week_comparison_title">Week Comparison | DTR Telemetry</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://static.wikia.nocookie.net; connect-src 'self' ws: wss: https://cdn.jsdelivr.net;">
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/telemetry.css">
     <link rel="stylesheet" href="css/theme.css">
@@ -14,7 +16,6 @@
     <link rel="manifest" href="favicons/site.webmanifest">
     <meta name="theme-color" content="#10131a">
 
-    <script src="scripts/theme-sync.js"></script>
     <style>
         .comparison-container {
             max-width: 1000px;
@@ -59,12 +60,6 @@
         .summary-card h3 { font-size: 0.8rem; margin-bottom: 10px; opacity: 0.7; }
         .summary-card strong { font-size: 1.8rem; display: block; color: var(--accent); }
     </style>
-    <script>
-        const savedTheme = (window.ThemeSync && typeof window.ThemeSync.getLocalTheme === 'function')
-            ? window.ThemeSync.getLocalTheme()
-            : (localStorage.getItem('user-theme') || 'f1');
-        document.documentElement.setAttribute('data-theme', savedTheme);
-    </script>
 </head>
 <body class="telemetry-page">
 
@@ -73,7 +68,7 @@
         <div class="telemetry-header-inner">
             <h1 data-i18n="telemetry_dashboard.telemetry_weekly_comparison_view">Weekly Comparison View</h1>
             <div class="telemetry-header-actions">
-                <button class="telemetry-btn" onclick="window.location.href='telemetry.html'" data-i18n="navigation.back_to_telemetry">Back to Telemetry</button>
+                <a href="telemetry.html" class="telemetry-btn" style="text-decoration:none; display:inline-flex; align-items:center;" data-i18n="navigation.back_to_telemetry">Back to Telemetry</a>
             </div>
         </div>
     </header>
@@ -111,18 +106,21 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="scripts/store.js"></script>
-<script src="scripts/dtr-core.js"></script>
-<script src="scripts/dtr-image-store.js"></script>
-<script src="scripts/dtr-storage.js"></script>
-<script src="scripts/dtr-i18n.js"></script>
-<script src="scripts/week-comparison.js"></script>
-<script>
-    window.addEventListener("DOMContentLoaded", () => {
-        if (window.DTRI18N && typeof window.DTRI18N.bootstrap === "function") {
-            window.DTRI18N.bootstrap();
-        }
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script type="module">
+    import { ThemeSync } from './scripts/theme-sync';
+    import { DTRI18N } from './scripts/dtr-i18n';
+    import { hydrateOjtSettingsFromStorage } from './scripts/core/dtr-engine';
+    import { fetchWeekComparisonTelemetryData, renderWeekComparison } from './scripts/week-comparison';
+
+    const savedTheme = ThemeSync.getLocalTheme();
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        hydrateOjtSettingsFromStorage();
+        await DTRI18N.bootstrap();
+        const logs = await fetchWeekComparisonTelemetryData();
+        renderWeekComparison(logs);
     });
 </script>
 </body>

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title data-i18n="telemetry_dashboard.telemetry_title">DTR Telemetry | Performance Analytics</title>
   <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&family=Noto+Sans:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&family=Noto+Sans+SC:wght@400;600;700&family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdn.jsdelivr.net; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://static.wikia.nocookie.net; connect-src 'self' ws: wss: https://cdn.jsdelivr.net;">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/telemetry.css">
   <link rel="stylesheet" href="css/theme.css">
@@ -15,27 +16,78 @@
   <link rel="apple-touch-icon" href="favicons/apple-touch-icon.png" sizes="192x192">
   <link rel="manifest" href="favicons/site.webmanifest">
   <meta name="theme-color" content="#10131a">
-  <script src="scripts/theme-sync.js"></script>
-  <script src="scripts/dtr-i18n.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    // Get the saved theme immediately to prevent a white "flash" on load
-    const savedTheme = (window.ThemeSync && typeof window.ThemeSync.getLocalTheme === 'function')
-      ? window.ThemeSync.getLocalTheme()
-      : (localStorage.getItem('user-theme') || 'f1');
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  </script>
 </head>
 <body>
 
-<div class="container telemetry-page">
+<!-- Page Loader / Theme Switch Transition (mirrors index.html) -->
+<div id="pageLoader" class="page-loader">
+  <div class="page-loader-panel">
+    <img class="page-loader-logo" src="favicons/F1Favicon.svg" alt="DTR Logo" id="pageLoaderLogo">
+    <p class="page-loader-title" data-i18n="loader.custom_dtr">Custom DTR</p>
+    <p class="page-loader-text" data-i18n="loader.loading_dtr">Loading DTR...</p>
+  </div>
+  <div class="page-loader-bar"><span class="page-loader-progress"></span></div>
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('user-theme') || 'f1';
+      const savedLang  = localStorage.getItem('dtr-language') || 'en';
+
+      // Inline translations to avoid English flash before i18n loads
+      const translations = {
+        'de':      { title: 'Benutzerdefinierter DTR', text: 'DTR wird geladen...' },
+        'es':      { title: 'DTR Personalizado',       text: 'Cargando DTR...' },
+        'fr':      { title: 'DTR Personnalisé',        text: 'Chargement DTR...' },
+        'id':      { title: 'DTR Kustom',              text: 'Memuat DTR...' },
+        'it':      { title: 'DTR Personalizzato',      text: 'Caricamento DTR...' },
+        'ja':      { title: 'カスタムDTR',              text: 'DTRをロード中...' },
+        'ms':      { title: 'DTR Tersuai',             text: 'Memuatkan DTR...' },
+        'pt':      { title: 'DTR Personalizado',       text: 'Carregando DTR...' },
+        'tl':      { title: 'Custom DTR',              text: 'Nilo-load ang DTR...' },
+        'vi':      { title: 'DTR Tùy Chỉnh',           text: 'Đang tải DTR...' },
+        'zh-Hans': { title: '自定义 DTR',               text: '正在加载 DTR...' },
+        'zh-Hant': { title: '自訂 DTR',                text: '正在載入 DTR...' },
+        'en':      { title: 'Custom DTR',              text: 'Loading DTR...' }
+      };
+
+      const baseLang = savedLang.split('-')[0];
+      const langData = translations[savedLang] || translations[baseLang] || translations['en'];
+
+      const titleEl = document.querySelector('#pageLoader .page-loader-title');
+      const textEl  = document.querySelector('#pageLoader .page-loader-text');
+      if (titleEl) titleEl.textContent = langData.title;
+      if (textEl)  textEl.textContent  = langData.text;
+
+      const logoMap = {
+        'f1':       'favicons/F1Favicon.svg',
+        'f1-light': 'favicons/F1Favicon.svg',
+        'cadillac': 'favicons/CaddyFavicon.svg',
+        'apx':      'favicons/APXFavicon.svg',
+        'mclaren':  'favicons/McLFavicon.svg',
+        'kiki':     'favicons/KikiFavicon.svg',
+        'ferrari':  'favicons/FerrariFavicon.svg',
+        'ztmy':     'favicons/ZTMYFavicon.svg'
+      };
+
+      const logoEl = document.getElementById('pageLoaderLogo');
+      if (logoEl && logoMap[savedTheme]) logoEl.src = logoMap[savedTheme];
+
+      // Prevent flash of dark loader in light mode
+      if (savedTheme === 'f1-light') {
+        const loaderEl = document.getElementById('pageLoader');
+        if (loaderEl) loaderEl.classList.add('page-loader-light');
+      }
+    })();
+  </script>
+</div>
+
+<div class="container telemetry-page" id="telemetryContainer">
   <!-- Header: compact single row -->
-  <header class="telemetry-header card">
+  <header class="telemetry-header card static-card" id="telemetryHeaderCard">
     <div class="telemetry-header-inner">
       <h1 data-i18n="telemetry_dashboard.telemetry_title">Productivity Telemetry</h1>
       <div class="telemetry-window-control">
         <label for="weekSelect" class="telemetry-label" data-i18n="telemetry_dashboard.telemetry_window">Window</label>
-        <select id="weekSelect" class="telemetry-select" onchange="updateView()">
+        <select id="weekSelect" class="telemetry-select">
           <option value="all" data-i18n="navigation.all_weeks">Full OJT Span</option>
         </select>
     </div>  
@@ -43,8 +95,13 @@
         <label for="languageSelect" class="telemetry-label" style="margin:0;" data-i18n="meta.language">Language</label>
         <select id="languageSelect" class="telemetry-select" style="max-width: 220px;"></select>
         <span style="opacity:0.2; margin:0 5px;">|</span>
+        <label style="display:flex; gap:6px; align-items:center; margin:0; font-size:12px; color:var(--text); opacity:0.85;">
+          <input type="checkbox" id="cardDraggableToggle">
+          <span data-i18n="card_draggable">Enable Card Reordering (Drag & Drop)</span>
+        </label>
+        <span style="opacity:0.2; margin:0 5px;">|</span>
         <label for="telemetryThemeSelect" class="telemetry-label" style="margin:0;" data-i18n="simulator.telemetry_themes">Themes:</label>
-        <select id="telemetryThemeSelect" class="telemetry-select" onchange="setTelemetryTheme(this.value)">
+        <select id="telemetryThemeSelect" class="telemetry-select">
           <option value="f1" data-i18n="theme_formula1">Formula 1</option>
           <option value="cadillac" data-i18n="theme_cadillac">Cadillac</option>
           <option value="apx" data-i18n="theme_apx">APX GP</option>
@@ -53,59 +110,51 @@
           <option value="kiki" data-i18n="theme_kiki">Kiki</option>
           <option value="ztmy" data-i18n="theme_ztmy">ずとまよ</option>
         </select>
-        <button id="telemetryF1LightToggleBtn" class="telemetry-btn" type="button" onclick="toggleF1LightMode()" style="display:flex; align-items:center; justify-content:center; padding: 6px 12px; width:44px; height:38px;">
+        <button id="telemetryF1LightToggleBtn" class="telemetry-btn" type="button" data-action="toggle-f1-light" style="display:flex; align-items:center; justify-content:center; padding: 6px 12px; width:44px; height:38px;">
           <span class="material-symbols-outlined">light_mode</span>
         </button>
-        <button class="telemetry-btn" onclick="window.location.href='index.html'" style="display:flex; align-items:center; justify-content:center; padding: 6px 12px; height:38px;" data-i18n="navigation.back_to_dtr">Back to DTR</button>
-    </div>
+        <a href="index.html" class="telemetry-btn" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; padding: 6px 12px; height:38px; color:var(--text);" data-i18n="navigation.back_to_dtr">Back to DTR</a>
+      </div>
   </header>
   
-  <!-- Section: Simulation Controls (Hidden by default or compact) -->
-  <section class="telemetry-section simulation-box" id="simSection">
-    <div class="card sim-card">
-      <div class="sim-header">
-        <h3><span class="sim-icon">⚡</span> <span data-i18n="simulator.telemetry_performance_simulator">Performance Simulator</span></h3>
-        <div class="sim-actions">
-           <button class="telemetry-btn btn-dim" onclick="toggleSimulation()" id="simToggleBtn" data-i18n="simulator.telemetry_enter_sim_mode">Enter Sim Mode</button>
-           <button class="telemetry-btn btn-danger" onclick="resetTelemetry()" style="display:none" id="simResetBtn" data-i18n="simulator.telemetry_reset_data">Reset Data</button>
+  <!-- Section: Simulation Controls -->
+<div class="card telemetry-section" id="simSection">
+    <div class="card-header">
+      <h2 class="section-title">
+        <span class="sim-icon">⚡</span> <span data-i18n="simulator.telemetry_performance_simulator">Performance Simulator</span>
+      </h2>
+      <div class="card-controls">
+        <button class="telemetry-btn btn-dim" data-action="toggle-sim" id="simToggleBtn" data-i18n="simulator.telemetry_enter_sim_mode">Enter Sim Mode</button>
+        <button class="telemetry-btn btn-danger" data-action="reset-sim" style="display:none" id="simResetBtn" data-i18n="simulator.telemetry_reset_data">Reset Data</button>
         </div>
+    </div>
+    <div id="simControls" class="sim-body">
+      <div class="sim-row">
+        <div class="sim-input-group">
+          <label data-i18n="simulator.telemetry_daily_hours">Daily Hours:</label>
+          <input type="number" id="simHours" value="8" step="0.5" min="0" max="24">
+        </div>
+        <div class="sim-input-group">
+          <label data-i18n="simulator.telemetry_days_to_add">Days to Add:</label>
+          <input type="number" id="simDays" value="5" min="1" max="30">
+        </div>
+        <button class="telemetry-btn btn-accent" data-action="run-sim" data-i18n="simulator.telemetry_inject_sim_data">Inject Sim Data</button>
       </div>
-      <div id="simControls" class="sim-body" style="display:none">
-        <div class="sim-row">
-          <div class="sim-input-group">
-            <label data-i18n="simulator.telemetry_daily_hours">Daily Hours:</label>
-            <input type="number" id="simHours" value="8" step="0.5" min="0" max="24">
-          </div>
-          <div class="sim-input-group">
-            <label data-i18n="simulator.telemetry_days_to_add">Days to Add:</label>
-            <input type="number" id="simDays" value="5" min="1" max="30">
-          </div>
-          <div class="sim-input-group">
-            <label data-i18n="simulator.telemetry_sim_start_from">Start From:</label>
-            <select id="simStartMode" onchange="toggleSimStartDate(this.value)">
-              <option value="last" data-i18n="telemetry_sim_after_last">After Last Record</option>
-              <option value="specific" data-i18n="telemetry_sim_specific_date">Specific Date</option>
-            </select>
-          </div>
-          <div class="sim-input-group" id="simSpecificDateGroup" style="display:none">
-            <label data-i18n="session_input.dtr_date">Date:</label>
-            <input type="date" id="simStartDate">
-          </div>
-          <button class="telemetry-btn btn-accent" onclick="runSimulation()" data-i18n="simulator.telemetry_inject_sim_data">Inject Sim Data</button>
-        </div>
-        <p class="sim-note" data-i18n="simulator.telemetry_sim_note">Note: Simulated data is temporary and won't affect your real DTR records unless synced.</p>
-        <div id="simTracker" style="display:none; margin-top: 10px; padding: 8px 12px; background: rgba(var(--accent-rgb, 255, 30, 0), 0.1); border-left: 3px solid var(--accent); font-size: 13px; border-radius: 0 4px 4px 0;">
-          <span style="opacity: 0.8;">Simulation Anchor:</span> <strong id="simAnchorDateDisplay" style="color: var(--accent);">N/A</strong>
-        </div>
+      <p class="sim-note" data-i18n="simulator.telemetry_sim_note">Note: Simulated data is temporary and won't affect your real DTR records unless synced.</p>
+      <div id="simTracker" style="display:none; margin-top: 10px; padding: 8px 12px; background: rgba(var(--accent-rgb, 255, 30, 0), 0.1); border-left: 3px solid var(--accent); font-size: 13px; border-radius: 0 4px 4px 0;">
+        <span style="opacity: 0.8;">Simulation Anchor:</span> <strong id="simAnchorDateDisplay" style="color: var(--accent);">N/A</strong>
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- Section: Key metrics (2 rows & 3 cols) -->
-  <section class="telemetry-section">
-    <div class="section-header-flex">
+  <!-- Section: Key metrics (Overview) -->
+  <div class="card telemetry-section" id="overviewSection">
+    <div class="card-header">
       <h2 class="section-title" data-i18n="telemetry_dashboard.telemetry_overview">Overview</h2>
-      <button class="telemetry-btn" onclick="window.location.href='week-comparison.html'" data-i18n="telemetry_dashboard.telemetry_weekly_comparison_view">Weekly Comparison View</button>
+      <div class="card-controls">
+        <a href="week-comparison.html" class="telemetry-btn" style="text-decoration:none; display:inline-flex; align-items:center;" data-i18n="telemetry_dashboard.telemetry_weekly_comparison_view">Weekly Comparison View</a>
+        <button class="card-control-btn" data-action="toggle-card" title="Collapse/Expand"><span class="material-symbols-outlined notranslate" translate="no">expand_less</span></button>
+      </div>
     </div>
     <div class="telemetry-stats-grid">
       <div class="card stat-card" id="forecastCard">
@@ -130,10 +179,10 @@
             <span data-i18n="telemetry_dashboard.telemetry_projected_target">Projected Target</span>
             <div style="display:flex; align-items:center; gap:8px;">
               <span><span id="paceSliderVal">8.0</span>h/day</span>
-              <button class="telemetry-btn" id="resetPaceBtn" onclick="resetPaceSlider()" style="padding: 2px 6px; font-size: 10px; height: auto;">Reset</button>
+              <button class="telemetry-btn" id="resetPaceBtn" data-action="reset-pace" style="padding: 2px 6px; font-size: 10px; height: auto;">Reset</button>
             </div>
           </label>
-          <input type="range" id="paceSlider" min="1" max="16" step="0.5" value="8" oninput="updateTargetPace(this.value)">
+          <input type="range" id="paceSlider" min="1" max="16" step="0.5" value="8">
         </div>
         <p id="paceStatusMsg" class="stat-msg" data-i18n="telemetry_dashboard.telemetry_calculating">Calculating</p>
       </div>
@@ -169,106 +218,139 @@
         <p id="momentumStatus" class="stat-msg" data-i18n="telemetry_dashboard.telemetry_stability">Stability</p>
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- Main chart: trajectory -->
-  <section class="telemetry-section">
-    <div class="section-header-flex">
+  <!-- Section: Cumulative Progress -->
+  <div class="card telemetry-section" id="trajectorySection">
+    <div class="card-header">
       <h2 class="section-title" data-i18n="charts_general.telemetry_cumulative_progress_vs_goal">Cumulative Progress vs Goal</h2>
-    </div>
-    <div class="card chart-card chart-card-wide">
-      <div class="chart-wrap chart-tall">
-        <canvas id="trajectoryChart"></canvas>
+      <div class="card-controls">
+        <div class="chart-controls" style="margin-right: 8px;">
+          <button class="chart-view-btn active" data-action="switch-chart-view" data-chart="trajectory" data-view="line" title="Line View"><span class="material-symbols-outlined">show_chart</span></button>
+          <button class="chart-view-btn" data-action="switch-chart-view" data-chart="trajectory" data-view="bar" title="Bar View"><span class="material-symbols-outlined">bar_chart</span></button>
+        </div>
+        <button class="card-control-btn" data-action="toggle-card" title="Collapse/Expand"><span class="material-symbols-outlined notranslate" translate="no">expand_less</span></button>
       </div>
     </div>
-  </section>
+    <div class="chart-wrap chart-tall">
+      <canvas id="trajectoryChart"></canvas>
+    </div>
+  </div>
 
-  <!-- Daily performance: delta + hour distribution + radar -->
-  <section class="telemetry-section">
-    <div class="section-header-flex">
+  <!-- Section: Day-of-Week Dynamics -->
+  <div class="card telemetry-section" id="dynamicsSection">
+    <div class="card-header">
       <h2 class="section-title" data-i18n="charts_general.telemetry_day_of_week_dynamics">Day-of-Week Dynamics</h2>
+      <div class="card-controls">
+        <div style="display: flex; align-items: center; gap: 10px; font-size: 0.82rem; opacity: 0.85; font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 12px;">
+          <span data-i18n="ui.chart_fit_mode">Fit</span>
+          <label class="switch">
+            <input type="checkbox" id="deltaChartScrollToggle">
+            <span class="slider round"></span>
+          </label>
+          <span data-i18n="ui.chart_scroll_mode">Scroll</span>
+        </div>
+        <button class="card-control-btn" data-action="toggle-card" title="Collapse/Expand"><span class="material-symbols-outlined notranslate" translate="no">expand_less</span></button>
+      </div>
     </div>
     <div class="telemetry-charts-row">
-      <div class="card chart-card chart-card-wide chart-card-delta">
+      <div class="card chart-card chart-card-wide chart-card-delta" id="deltaChartCard">
         <h3 data-i18n="charts_general.telemetry_session_delta_vs_8h">Session Delta (vs 8h)</h3>
-        <div class="chart-wrap chart-wrap-delta">
-          <canvas id="deltaChart"></canvas>
+        <div class="delta-chart-scroll-wrapper" id="deltaChartScrollWrapper">
+          <div class="chart-wrap chart-wrap-delta" id="deltaChartContainer">
+            <canvas id="deltaChart"></canvas>
+          </div>
         </div>
       </div>
     </div>
     <div class="telemetry-charts-row telemetry-dynamics-secondary">
-      <div class="card chart-card">
+      <div class="card chart-card" id="productivityMatrixCard">
         <h3 data-i18n="charts_general.telemetry_productivity_matrix">Performance Matrix</h3>
         <div class="chart-wrap chart-tall">
           <canvas id="productivityMatrixChart"></canvas>
         </div>
       </div>
-      <div class="card chart-card">
+      <div class="card chart-card" id="dayVelocityRadarCard">
         <h3 data-i18n="charts_general.telemetry_day_of_week_velocity">Day-of-Week Velocity</h3>
         <div class="chart-wrap chart-wrap-velocity">
           <canvas id="dayVelocityRadar"></canvas>
         </div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- Weekly Effort breakdown -->
-  <section class="telemetry-section">
-    <div class="section-header-flex">
+  <!-- Section: Weekly Effort breakdown -->
+  <div class="card telemetry-section" id="weeklyEffortSection">
+    <div class="card-header">
       <h2 class="section-title" data-i18n="charts_general.telemetry_weekly_effort_breakdown">Weekly Effort Breakdown</h2>
-    </div>
-    <div class="card chart-card chart-card-wide">
-      <div class="chart-wrap">
-        <canvas id="weeklyEffortChart"></canvas>
+      <div class="card-controls">
+        <div class="chart-controls" style="margin-right: 8px;">
+          <button class="chart-view-btn active" data-action="switch-chart-view" data-chart="effort" data-view="bar" title="Bar View"><span class="material-symbols-outlined">bar_chart</span></button>
+          <button class="chart-view-btn" data-action="switch-chart-view" data-chart="effort" data-view="pie" title="Pie View"><span class="material-symbols-outlined">pie_chart</span></button>
+        </div>
+        <button class="card-control-btn" data-action="toggle-card" title="Collapse/Expand"><span class="material-symbols-outlined notranslate" translate="no">expand_less</span></button>
       </div>
     </div>
-  </section>
+    <div class="chart-wrap">
+      <canvas id="weeklyEffortChart"></canvas>
+    </div>
+  </div>
 
-  <!-- Weekly trend (Refactored to Candlestick) -->
-  <section class="telemetry-section">
-    <div class="section-header-flex">
+  <!-- Section: Weekly Delta Momentum -->
+  <div class="card telemetry-section" id="momentumSection">
+    <div class="card-header">
       <h2 class="section-title" data-i18n="charts_general.telemetry_weekly_delta_momentum">Weekly Delta Momentum</h2>
-      <div class="ohlc-legend">
-        <div class="legend-item"><div class="level-box" style="background:var(--color-good)"></div> <span data-i18n="charts_general.telemetry_gained">Gained</span></div>
-        <div class="legend-item"><div class="level-box" style="background:var(--accent)"></div> <span data-i18n="charts_general.telemetry_lost">Lost</span></div>
+      <div class="card-controls" style="display:flex; align-items:center; gap:10px;">
+        <div class="ohlc-legend" style="display:flex; gap:10px;">
+          <div class="legend-item"><div class="level-box" style="background:var(--color-good)"></div> <span data-i18n="charts_general.telemetry_gained">Gained</span></div>
+          <div class="legend-item"><div class="level-box" style="background:var(--accent)"></div> <span data-i18n="charts_general.telemetry_lost">Lost</span></div>
+        </div>
+        <div class="chart-controls" style="margin-right: 8px;">
+          <button class="chart-view-btn active" data-action="switch-chart-view" data-chart="momentum" data-view="candlestick" title="Candlestick View"><span class="material-symbols-outlined">candlestick_chart</span></button>
+          <button class="chart-view-btn" data-action="switch-chart-view" data-chart="momentum" data-view="bar" title="Bar View"><span class="material-symbols-outlined">bar_chart</span></button>
+        </div>
+        <button class="card-control-btn" data-action="toggle-card" title="Collapse/Expand"><span class="material-symbols-outlined notranslate" translate="no">expand_less</span></button>
       </div>
     </div>
-    <div class="card chart-card chart-card-wide">
-      <div class="chart-wrap">
-        <canvas id="candlestickChart"></canvas>
-      </div>
+    <div class="chart-wrap">
+      <canvas id="candlestickChart"></canvas>
     </div>
-  </section>
+  </div>
 
-  <section class="telemetry-section">
-    <div class="section-header-flex">
+  <!-- Section: Weekly Performance Matrix Table -->
+  <div class="card telemetry-section" id="weeklyPerformanceSection">
+    <div class="card-header">
       <h2 class="section-title" data-i18n="charts_general.telemetry_weekly_performance_matrix">Weekly Performance Matrix</h2>
+      <div class="card-controls">
+        <button class="card-control-btn" data-action="toggle-card" title="Collapse/Expand"><span class="material-symbols-outlined notranslate" translate="no">expand_less</span></button>
+      </div>
     </div>
-    <div class="card">
-        <table class="comparison-table" style="width:100%; border-collapse: collapse; font-size: 11px;">
-            <thead>
-                <tr style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.05);">
-                    <th style="padding: 10px; text-align: left; color: var(--accent);" data-i18n="navigation.week">Week</th>
-                    <th style="padding: 10px; text-align: left; color: var(--accent);" data-i18n="charts_general.telemetry_hrs_ojt">Hrs (OJT)</th>
-                    <th style="padding: 10px; text-align: left; color: var(--accent);" data-i18n="charts_general.telemetry_hrs_pers">Hrs (Pers)</th>
-                    <th style="padding: 10px; text-align: left; color: var(--accent);" data-i18n="charts_general.telemetry_gain_pct">Gain (%)</th>
-                    <th style="padding: 10px; text-align: left; color: var(--accent);" data-i18n="charts_general.telemetry_eff_pct">Eff %</th>
-                </tr>
-            </thead>
-            <tbody id="telemetryWeeklyTableBody">
-                <!-- Injected via JS -->
-            </tbody>
-        </table>
-    </div>
-  </section>
+    <table class="comparison-table" style="width:100%; border-collapse: collapse; font-size: 11px;">
+      <thead>
+        <tr style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.05);">
+          <th style="padding: 10px; text-align: left; color: var(--accent);" data-i18n="navigation.week">Week</th>
+          <th style="padding: 10px; text-align: left; color: var(--accent);" data-i18n="charts_general.telemetry_hrs_ojt">Hrs (OJT)</th>
+          <th style="padding: 10px; text-align: left; color: var(--accent);" data-i18n="charts_general.telemetry_hrs_pers">Hrs (Pers)</th>
+          <th style="padding: 10px; text-align: left; color: var(--accent);" data-i18n="charts_general.telemetry_gain_pct">Gain (%)</th>
+          <th style="padding: 10px; text-align: left; color: var(--accent);" data-i18n="charts_general.telemetry_eff_pct">Eff %</th>
+        </tr>
+      </thead>
+      <tbody id="telemetryWeeklyTableBody">
+        <!-- Injected via JS -->
+      </tbody>
+    </table>
+  </div>
 
-  <!-- L2 & wellness -->
-  <section class="telemetry-section">
-    <div class="section-header-flex">
-      <h2 class="section-title" data-i18n="telemetry_l2_wellness">L2 Telemetry & Wellness</h2>
+  <!-- Section: L2 & wellness -->
+  <div class="card telemetry-section" id="l2WellnessSection">
+    <div class="card-header">
+      <h2 class="section-title" data-i18n="telemetry_l2_wellness">L2 Telemetry &amp; Wellness</h2>
+      <div class="card-controls">
+        <button class="card-control-btn" data-action="toggle-card" title="Collapse/Expand"><span class="material-symbols-outlined notranslate" translate="no">expand_less</span></button>
+      </div>
     </div>
     <div class="telemetry-charts-row telemetry-charts-two">
-      <div class="card stat-card">
+      <div class="card stat-card" id="l2PerformanceCard">
         <h3 data-i18n="telemetry_l2_wellness.telemetry_l2_performance">L2 Performance</h3>
         <div class="stat-rows">
           <div class="stat-row"><span data-i18n="telemetry_l2_wellness.telemetry_focus_score">Focus Score</span><span id="focusScore" class="stat-accent">0.0</span></div>
@@ -280,30 +362,38 @@
           <div class="stat-row"><span data-i18n="telemetry_l2_wellness.telemetry_personal_ojt_ratio">Personal/OJT</span><span id="personalOjtRatio">0%</span></div>
         </div>
       </div>
-      <div class="card chart-card">
+      <div class="card chart-card" id="energyZoneChartCard">
         <h3 data-i18n="charts_general.telemetry_energy_zones">Energy Zones</h3>
         <div class="chart-wrap">
           <canvas id="energyZoneChart"></canvas>
         </div>
       </div>
     </div>
-
-    <!-- Identity chart placed within L2 group -->
-    <div class="telemetry-charts-row">
-      <div class="card chart-card chart-card-wide">
-        <h3 data-i18n="charts_general.telemetry_identity_alignment_title">Identity Alignment</h3>
+    <div class="telemetry-charts-row" style="margin-top: 14px;">
+      <div class="card chart-card chart-card-wide" id="identityChartCard">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <h3 data-i18n="charts_general.telemetry_identity_alignment_title" style="margin: 0;">Identity Alignment</h3>
+          <div class="chart-controls">
+            <button class="chart-view-btn active" data-action="switch-chart-view" data-chart="identity" data-view="radar" title="Radar View"><span class="material-symbols-outlined">radar</span></button>
+            <button class="chart-view-btn" data-action="switch-chart-view" data-chart="identity" data-view="line" title="Line View"><span class="material-symbols-outlined">show_chart</span></button>
+          </div>
+        </div>
         <div class="chart-wrap chart-tall">
           <canvas id="identityChart"></canvas>
         </div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <section class="telemetry-section">
-    <div class="section-header-flex">
+  <!-- Section: Chart Formulas -->
+  <div class="card telemetry-section" id="chartFormulasSection">
+    <div class="card-header">
       <h2 class="section-title" data-i18n="charts_formulas.telemetry_chart_formulas">Chart Formulas</h2>
+      <div class="card-controls">
+        <button class="card-control-btn" data-action="toggle-card" title="Collapse/Expand"><span class="material-symbols-outlined notranslate" translate="no">expand_less</span></button>
+      </div>
     </div>
-    <div class="card">
+    <div class="formula-grid">
       <style>
         .formula-grid {
           display: grid;
@@ -345,84 +435,80 @@
         }
         .formula-vars li { margin: 2px 0; }
       </style>
-
-      <div class="formula-grid">
-        <details class="formula-card" open>
-          <summary class="formula-title"><strong data-i18n="charts_formulas.formula_cumulative_title">Cumulative Progress vs Goal</strong></summary>
-          <code class="formula-block">C_actual(t) = Σ hours_i</code>
-          <code class="formula-block">C_ideal(t) = workdays_elapsed × DAILY_TARGET_HOURS</code>
-          <code class="formula-block">C_proj(t+k) = C_actual(t) + (pace × k_workdays)</code>
-          <ul class="formula-vars">
-            <li><code>t</code>: <span data-i18n="charts_formulas.formula_var_t">current date index in timeline</span></li>
-            <li><code>k</code>: <span data-i18n="charts_formulas.formula_var_k">projected workdays ahead</span></li>
-            <li><code>hours_i</code>: <span data-i18n="charts_formulas.formula_var_hours">hours on record i</span></li>
-            <li><code>pace</code>: <span data-i18n="charts_formulas.formula_var_pace">selected/estimated daily pace (hours/day)</span></li>
-          </ul>
-        </details>
-        <details class="formula-card">
-          <summary class="formula-title"><strong data-i18n="charts_formulas.formula_delta_title">Session Delta (vs 8h)</strong></summary>
-          <code class="formula-block">Δ_i = hours_i - 8</code>
-          <code class="formula-block">ΣΔ_t = Σ (hours_i - 8)</code>
-          <ul class="formula-vars">
-            <li><code>Δ_i</code>: <span data-i18n="charts_formulas.formula_var_delta_i">daily over/under target for day i</span></li>
-            <li><code>ΣΔ_t</code>: <span data-i18n="charts_formulas.formula_var_sum_delta">cumulative delta up to date t</span></li>
-            <li><code>8</code>: <span data-i18n="charts_formulas.formula_var_baseline">baseline target used by the chart</span></li>
-          </ul>
-        </details>
-        <details class="formula-card">
-          <summary class="formula-title"><strong data-i18n="charts_formulas.formula_radar_title">Day-of-Week Velocity (Radar)</strong></summary>
-          <code class="formula-block">avg_d = (Σ hours_on_d) / count_d</code>
-          <ul class="formula-vars">
-            <li><code>d</code>: <span data-i18n="charts_formulas.formula_var_weekday">weekday bucket (Mon..Sat)</span></li>
-            <li><code>hours_on_d</code>: <span data-i18n="charts_formulas.formula_var_hours_on_d">hours logged on weekday d</span></li>
-            <li><code>count_d</code>: <span data-i18n="charts_formulas.formula_var_count_d">number of entries for weekday d</span></li>
-          </ul>
-        </details>
-        <details class="formula-card">
-          <summary class="formula-title"><strong data-i18n="charts_formulas.formula_productivity_title">Performance Matrix (Correlation)</strong></summary>
-          <code class="formula-block">Output = (Tasks / Hours) correlated with Identity Score</code>
-          <ul class="formula-vars">
-            <li><span data-i18n="charts_general.chart_productivity_matrix_x">Identity Score (Alignment)</span></li>
-            <li><span data-i18n="charts_general.chart_productivity_matrix_y">Hourly Output (Tasks/hr)</span></li>
-            <li><span data-i18n="charts_general.formula_var_impact">Bubble Size: Relative Session Duration</span></li>
-          </ul>
-        </details>
-        <details class="formula-card">
-          <summary class="formula-title"><strong data-i18n="charts_formulas.formula_ohlc_title">Weekly Delta Momentum (Candlestick)</strong></summary>
-          <code class="formula-block">delta_i = hours_i - 8</code>
-          <code class="formula-block">open_w = first(delta_i), close_w = last(delta_i)</code>
-          <code class="formula-block">high_w = max(delta_i), low_w = min(delta_i)</code>
-          <ul class="formula-vars">
-            <li><code>w</code>: <span data-i18n="charts_formulas.formula_var_week_bucket">selected week bucket</span></li>
-            <li><code>open_w / close_w</code>: <span data-i18n="charts_formulas.formula_var_open_close">first/last delta of week w</span></li>
-            <li><code>high_w / low_w</code>: <span data-i18n="charts_formulas.formula_var_high_low">highest/lowest delta in week w</span></li>
-          </ul>
-        </details>
-        <details class="formula-card">
-          <summary class="formula-title"><strong data-i18n="charts_formulas.formula_identity_title">Identity Alignment</strong></summary>
-          <code class="formula-block">identity_avg_w = (Σ identityScore_i) / count_w</code>
-          <code class="formula-block">target = 4.0</code>
-          <ul class="formula-vars">
-            <li><code>identityScore_i</code>: <span data-i18n="charts_formulas.formula_var_identity_score">identity score for entry i</span></li>
-            <li><code>count_w</code>: <span data-i18n="charts_formulas.formula_var_count_w">entries in week w with valid identity score</span></li>
-            <li><code>target</code>: <span data-i18n="charts_formulas.formula_var_guide_line">reference guide line (4.0)</span></li>
-          </ul>
-        </details>
-        <details class="formula-card">
-          <summary class="formula-title"><strong data-i18n="charts_formulas.formula_energy_title">Energy Zones</strong></summary>
-          <code class="formula-block">Elite: hours ≥ 8 and personalHours ≥ 1</code>
-          <code class="formula-block">Overdrive: (hours + personalHours) &gt; 9</code>
-          <code class="formula-block">Solid: hours ≥ 8 | Survival: hours ≥ 6 | Recovery: otherwise</code>
-          <ul class="formula-vars">
-            <li><code>hours</code>: <span data-i18n="charts_formulas.formula_var_ojt_hours">OJT hours for a day</span></li>
-            <li><code>personalHours</code>: <span data-i18n="charts_formulas.formula_var_personal_hours">personal project hours for a day</span></li>
-            <li><span data-i18n="charts_formulas.formula_var_zone_rule">Each record maps to one zone based on rule priority order</span></li>
-          </ul>
-        </details>
-      </div>
+      <details class="formula-card" open>
+        <summary class="formula-title"><strong data-i18n="charts_formulas.formula_cumulative_title">Cumulative Progress vs Goal</strong></summary>
+        <code class="formula-block">C_actual(t) = Σ hours_i</code>
+        <code class="formula-block">C_ideal(t) = workdays_elapsed × DAILY_TARGET_HOURS</code>
+        <code class="formula-block">C_proj(t+k) = C_actual(t) + (pace × k_workdays)</code>
+        <ul class="formula-vars">
+          <li><code>t</code>: <span data-i18n="charts_formulas.formula_var_t">current date index in timeline</span></li>
+          <li><code>k</code>: <span data-i18n="charts_formulas.formula_var_k">projected workdays ahead</span></li>
+          <li><code>hours_i</code>: <span data-i18n="charts_formulas.formula_var_hours">hours on record i</span></li>
+          <li><code>pace</code>: <span data-i18n="charts_formulas.formula_var_pace">selected/estimated daily pace (hours/day)</span></li>
+        </ul>
+      </details>
+      <details class="formula-card">
+        <summary class="formula-title"><strong data-i18n="charts_formulas.formula_delta_title">Session Delta (vs 8h)</strong></summary>
+        <code class="formula-block">Δ_i = hours_i - 8</code>
+        <code class="formula-block">ΣΔ_t = Σ (hours_i - 8)</code>
+        <ul class="formula-vars">
+          <li><code>Δ_i</code>: <span data-i18n="charts_formulas.formula_var_delta_i">daily over/under target for day i</span></li>
+          <li><code>ΣΔ_t</code>: <span data-i18n="charts_formulas.formula_var_sum_delta">cumulative delta up to date t</span></li>
+          <li><code>8</code>: <span data-i18n="charts_formulas.formula_var_baseline">baseline target used by the chart</span></li>
+        </ul>
+      </details>
+      <details class="formula-card">
+        <summary class="formula-title"><strong data-i18n="charts_formulas.formula_radar_title">Day-of-Week Velocity (Radar)</strong></summary>
+        <code class="formula-block">avg_d = (Σ hours_on_d) / count_d</code>
+        <ul class="formula-vars">
+          <li><code>d</code>: <span data-i18n="charts_formulas.formula_var_weekday">weekday bucket (Mon..Sat)</span></li>
+          <li><code>hours_on_d</code>: <span data-i18n="charts_formulas.formula_var_hours_on_d">hours logged on weekday d</span></li>
+          <li><code>count_d</code>: <span data-i18n="charts_formulas.formula_var_count_d">number of entries for weekday d</span></li>
+        </ul>
+      </details>
+      <details class="formula-card">
+        <summary class="formula-title"><strong data-i18n="charts_formulas.formula_productivity_title">Performance Matrix (Correlation)</strong></summary>
+        <code class="formula-block">Output = (Tasks / Hours) correlated with Identity Score</code>
+        <ul class="formula-vars">
+          <li><span data-i18n="charts_general.chart_productivity_matrix_x">Identity Score (Alignment)</span></li>
+          <li><span data-i18n="charts_general.chart_productivity_matrix_y">Hourly Output (Tasks/hr)</span></li>
+          <li><span data-i18n="charts_general.formula_var_impact">Bubble Size: Relative Session Duration</span></li>
+        </ul>
+      </details>
+      <details class="formula-card">
+        <summary class="formula-title"><strong data-i18n="charts_formulas.formula_ohlc_title">Weekly Delta Momentum (Candlestick)</strong></summary>
+        <code class="formula-block">delta_i = hours_i - 8</code>
+        <code class="formula-block">open_w = first(delta_i), close_w = last(delta_i)</code>
+        <code class="formula-block">high_w = max(delta_i), low_w = min(delta_i)</code>
+        <ul class="formula-vars">
+          <li><code>w</code>: <span data-i18n="charts_formulas.formula_var_week_bucket">selected week bucket</span></li>
+          <li><code>open_w / close_w</code>: <span data-i18n="charts_formulas.formula_var_open_close">first/last delta of week w</span></li>
+          <li><code>high_w / low_w</code>: <span data-i18n="charts_formulas.formula_var_high_low">highest/lowest delta in week w</span></li>
+        </ul>
+      </details>
+      <details class="formula-card">
+        <summary class="formula-title"><strong data-i18n="charts_formulas.formula_identity_title">Identity Alignment</strong></summary>
+        <code class="formula-block">identity_avg_w = (Σ identityScore_i) / count_w</code>
+        <code class="formula-block">target = 4.0</code>
+        <ul class="formula-vars">
+          <li><code>identityScore_i</code>: <span data-i18n="charts_formulas.formula_var_identity_score">identity score for entry i</span></li>
+          <li><code>count_w</code>: <span data-i18n="charts_formulas.formula_var_count_w">entries in week w with valid identity score</span></li>
+          <li><code>target</code>: <span data-i18n="charts_formulas.formula_var_guide_line">reference guide line (4.0)</span></li>
+        </ul>
+      </details>
+      <details class="formula-card">
+        <summary class="formula-title"><strong data-i18n="charts_formulas.formula_energy_title">Energy Zones</strong></summary>
+        <code class="formula-block">Elite: hours ≥ 8 and personalHours ≥ 1</code>
+        <code class="formula-block">Overdrive: (hours + personalHours) &gt; 9</code>
+        <code class="formula-block">Solid: hours ≥ 8 | Survival: hours ≥ 6 | Recovery: otherwise</code>
+        <ul class="formula-vars">
+          <li><code>hours</code>: <span data-i18n="charts_formulas.formula_var_ojt_hours">OJT hours for a day</span></li>
+          <li><code>personalHours</code>: <span data-i18n="charts_formulas.formula_var_personal_hours">personal project hours for a day</span></li>
+          <li><span data-i18n="charts_formulas.formula_var_zone_rule">Each record maps to one zone based on rule priority order</span></li>
+        </ul>
+      </details>
     </div>
-  </section>
-
+  </div>
 
   <div id="loadingOverlay" class="loading-overlay" style="display: none;">
     <div class="loading-spinner"></div>
@@ -430,31 +516,86 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="scripts/dtr-core.js"></script>
-<script src="scripts/dtr-image-store.js"></script>
-<script src="scripts/telemetry-core.js"></script>
-<script src="scripts/telemetry-charts.js"></script>
-<script src="scripts/telemetry-sim.js"></script>
-<script src="scripts/telemetry.js"></script>
-<script>
-  window.addEventListener("DOMContentLoaded", () => {
-    if (window.DTRI18N && typeof window.DTRI18N.bootstrap === "function") {
-      window.DTRI18N.bootstrap();
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script type="module">
+  import { ThemeSync } from './scripts/theme-sync';
+  import { DTRI18N } from './scripts/dtr-i18n';
+  import { toggleF1LightMode } from './scripts/core/dtr-engine';
+  import { toggleCard, toggleCardDragging } from './scripts/dtr-ui-aux';
+  import {
+    fetchTelemetryData,
+    populateWeekSelector,
+    updateView,
+    updateTargetPace,
+    resetPaceSlider,
+    renderTelemetry,
+    setTelemetryTheme,
+    switchChartView,
+    toggleDeltaChartScroll,
+    updatePaceSliderLockState
+  } from './scripts/telemetry';
+  import {
+    toggleSimulation,
+    resetTelemetry,
+    runSimulation
+  } from './scripts/telemetry-sim';
+
+  const savedTheme = ThemeSync.getLocalTheme();
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
+  const TELEMETRY_ACTIONS = {
+    'toggle-f1-light': () => toggleF1LightMode(),
+    'toggle-sim': () => toggleSimulation(),
+    'reset-sim': () => resetTelemetry(),
+    'run-sim': () => runSimulation(),
+    'reset-pace': () => resetPaceSlider(),
+    'toggle-card': (el) => toggleCard(el),
+    'switch-chart-view': (el) => {
+      const chart = el.getAttribute('data-chart');
+      const view = el.getAttribute('data-view');
+      if (chart && view) switchChartView(chart, view);
+    }
+  };
+
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest('[data-action]');
+    if (!target) return;
+    const action = target.getAttribute('data-action');
+    if (action && TELEMETRY_ACTIONS[action]) {
+      e.preventDefault();
+      TELEMETRY_ACTIONS[action](target);
     }
   });
-</script>
-<script>
-  // Wait for the script file to be fully parsed
-  window.addEventListener("load", () => {
-    if (window.DTRI18N && typeof window.DTRI18N.bootstrap === "function") {
-      window.DTRI18N.bootstrap().then(() => {
-        console.log("[DTR-Systems] i18n Engine Active");
-      });
-    } else {
-      console.error("[DTR-Systems] i18n Script failed to initialize object.");
-    }
-  });
+
+  const themeSelect = document.getElementById('telemetryThemeSelect');
+  if (themeSelect) {
+    themeSelect.addEventListener('change', (e) => setTelemetryTheme(e.target.value));
+  }
+
+  const weekSelect = document.getElementById('weekSelect');
+  if (weekSelect) {
+    weekSelect.addEventListener('change', () => updateView());
+  }
+
+  const cardDraggableToggle = document.getElementById('cardDraggableToggle');
+  if (cardDraggableToggle) {
+    cardDraggableToggle.addEventListener('change', (e) => {
+      toggleCardDragging(e.target.checked);
+      updatePaceSliderLockState(e.target.checked);
+    });
+  }
+
+  const paceSlider = document.getElementById('paceSlider');
+  if (paceSlider) {
+    paceSlider.addEventListener('input', (e) => updateTargetPace(e.target.value));
+  }
+
+  const deltaScrollToggle = document.getElementById('deltaChartScrollToggle');
+  if (deltaScrollToggle) {
+    deltaScrollToggle.addEventListener('change', (e) => {
+      toggleDeltaChartScroll(e.target.checked);
+    });
+  }
 </script>
 </body>
 </html>

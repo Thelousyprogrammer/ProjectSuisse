@@ -34,8 +34,6 @@ yarn-error.log*
 
 # Project Specific Exclusions
 i18n_grouping_rules.txt
-package.json
-package-lock.json
 scripts/test_ui.js
 scripts/test_calculations.js
 scripts/test_stability.js

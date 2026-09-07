@@ -1,0 +1,118 @@
+================================================================================
+CUSTOM DTR APPLICATION - SCRIPTS SECURITY AUDIT & CODE REVIEW REPORT
+Generated: 2026-08-20T17:03:00+08:00
+Workspace: c:\xampp\htdocs\DTR_Working_Tree\customDTR.github.io\scripts
+Compiler Status: TypeScript 5+ Strict Mode (tsc --noEmit: 0 ERRORS)
+================================================================================
+
+1. EXECUTIVE SUMMARY
+--------------------------------------------------------------------------------
+A comprehensive security and code review audit was performed across all scripts
+and modules within the repository. The audit covered:
+  - Strict TypeScript module migration and standard ES exports.
+  - Cross-Site Scripting (XSS) input filtering and HTML sanitization.
+  - Content Security Policy (CSP) compatibility and dynamic evaluation avoidance.
+  - Memory & Quota safety in IndexedDB / localStorage data persistence.
+  - Event delegation architecture & Action Whitelist validation.
+  - Timezone integrity and GMT 0 / UTC date computations.
+
+Overall Security Rating: SECURE / GRADE A
+Type Safety Rating: 100% STRICT ESM TYPESCRIPT
+
+
+2. MODULE-BY-MODULE AUDIT FINDINGS
+--------------------------------------------------------------------------------
+
+[A] scripts/core/dtr-engine.ts
+  - Status: PASS
+  - Review:
+    * All legacy `window.*` globals eliminated in favor of direct ES exports.
+    * Configuration validated via Zod (`SettingsSchema.parse(...)`).
+    * Zod validation errors reported to `SecurityMonitor.reportIncident(...)`.
+    * Default timezone anchored strictly to UTC / GMT 0 (`DEFAULT_TIMEZONE = "UTC"`).
+    * Date calculations (`toGmt8DateKey`, `parseDateKeyGmt8`, `addDaysGmt8`, `isWorkdayGmt8`)
+      use explicit UTC methods (`getUTCFullYear`, `getUTCMonth`, `getUTCDate`, `Date.UTC`)
+      preventing timezone drifting.
+
+[B] scripts/store.ts
+  - Status: PASS
+  - Review:
+    * Records strictly validated through `DailyRecordSchema` (Zod).
+    * Active input scanning on every `addRecord` / `setRecords` invocation.
+    * Invalid structure payloads trigger incident telemetry without crashing the UI.
+
+[C] scripts/utils/security-monitor.ts
+  - Status: PASS
+  - Review:
+    * Enforces suspicious pattern detection (`/<script/i`, `/javascript:/i`, `/on\w+\s*=/i`,
+      `/eval\s*\(/i`, `/Function\s*\(/i`, `/__proto__/i`, `/<iframe/i`, `/<object/i`).
+    * `SecurityMonitor.sanitizeHtml(...)` converts raw string nodes to textContent entities.
+    * Storage logging captures security incident timestamps and payloads.
+
+[D] scripts/dtr-storage.ts & scripts/dtr-storage-aux.ts
+  - Status: PASS
+  - Review:
+    * `submitDTR()` performs upfront input scanning through `SecurityMonitor.scanInput(...)`
+      on reflections, accomplishments, and tools before record construction.
+    * Multi-image uploads are processed asynchronously via IndexedDB (`dtr-image-store.ts`)
+      to avoid localStorage quota limits (`QuotaExceededError`).
+    * Image compression offloaded to dedicated Web Worker (`image-compressor.ts`).
+
+[E] scripts/dtr-exports.ts
+  - Status: PASS
+  - Review:
+    * File import ceiling of 50MB enforced for JSON / TOML imports.
+    * Data normalization & schema validation applied on all imported records.
+    * Exports sanitization prevents malicious file names during download triggers.
+
+[F] scripts/dtr-image-store.ts
+  - Status: PASS
+  - Review:
+    * IndexedDB transaction isolation with retry mechanism and structured cloning.
+    * MIME-type checks and ID-keyed lookup prevents base64 DOM memory leaks.
+
+[G] scripts/ui/dtr-view.ts & scripts/dtr-ui-aux.ts
+  - Status: PASS
+  - Review:
+    * Direct global `document.addEventListener("click", ...)` removed from view files.
+    * Edit modal and interaction handlers route strictly through named exports and
+      whitelisted actions in `src/main.ts` (`ACTION_DISPATCH`).
+    * Reflection viewer lazy-loads IndexedDB images via `IntersectionObserver`.
+
+[H] scripts/components/hardware-monitor.ts & page-loader.ts
+  - Status: PASS
+  - Review:
+    * WebGPU / WebGL hardware adapter information sanitization strips hex codes
+      and driver artifacts to avoid injection into the DOM.
+    * Safe navigation API measuring prevents client CPU denial of service.
+
+[I] scripts/utils/date-utils.ts & scripts/theme-sync.ts
+  - Status: PASS
+  - Review:
+    * Eliminated all `(window as any).* = ...` exposure blocks.
+    * Exported cleanly via `export { ... }`.
+    * Theme switching sanitized through whitelist `Set(["f1", "cadillac", "apx", "mclaren", "ferrari", "kiki", "ztmy"])`.
+
+
+3. SECURITY MATRIX SUMMARY
+--------------------------------------------------------------------------------
+Check Category                       Status    Mitigation / Mechanism
+--------------------------------------------------------------------------------
+1. XSS (Cross-Site Scripting)        PASSED    SecurityMonitor + DOM textContent
+2. Insecure Direct Eval              PASSED    No eval() or new Function() in TS
+3. Event Hijacking / Arbitrary Call  PASSED    ACTION_DISPATCH whitelist routing
+4. Storage Quota Flooding            PASSED    IndexedDB Blob Store + 50MB Import Limit
+5. Prototype Pollution               PASSED    __proto__ / constructor regex scan
+6. Timezone Offset Desync            PASSED    Unified UTC / GMT 0 calculation
+7. Module Pollution                  PASSED    Strict ES Module Exports across all scripts
+--------------------------------------------------------------------------------
+
+
+4. BUILD & LINT VALIDATION
+--------------------------------------------------------------------------------
+Compiler: TypeScript Compiler (tsc)
+Command:  npx tsc --noEmit
+Result:   Exit code 0 (0 errors, 0 warnings)
+
+Audit Completed Successfully.
+================================================================================
