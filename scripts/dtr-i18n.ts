@@ -91,7 +91,6 @@ let CURRENT_LANG = "en";
                     const validated = LocaleDictionarySchema.parse(rawDict);
                     DICT[cleanLang] = validated;
                     
-                    console.log(`[i18n] Loaded ${l}.${ext} for '${cleanLang}'`);
                     return true;
                 } catch (err) { /* silent fail */ }
             }
@@ -207,8 +206,6 @@ let CURRENT_LANG = "en";
                 const translation = t(key, getArgs(el));
                 if (translation !== key && translation) (el as HTMLElement).title = translation;
             });
-
-            console.log(`[i18n] Application Complete.`);
         },
 
         runMapper: function() {
@@ -288,7 +285,6 @@ let CURRENT_LANG = "en";
             });
 
             selector.onchange = (e) => this.setLanguage((e.target as HTMLSelectElement).value);
-            console.log("[i18n] Language Selector Rendered.");
         },
 
         bootstrap: async function() {

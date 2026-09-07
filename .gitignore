@@ -44,3 +44,9 @@ scripts/audit_locales.js
 .gemini/
 *.tmp
 *.bak
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+

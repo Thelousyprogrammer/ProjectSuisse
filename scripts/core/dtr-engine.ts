@@ -450,7 +450,6 @@ export function setTheme(themeName: string, options: any = {}): void {
         ThemeSync.setTheme(fallbackTheme, options)
             .then((appliedTheme) => {
                 try { updateFavicon(appliedTheme); } catch (_) {}
-                console.log("Theme synced:", appliedTheme);
             })
             .catch(() => {
                 document.documentElement.setAttribute("data-theme", fallbackTheme);
@@ -463,7 +462,6 @@ export function setTheme(themeName: string, options: any = {}): void {
     document.documentElement.setAttribute("data-theme", fallbackTheme);
     localStorage.setItem("user-theme", fallbackTheme);
     try { updateFavicon(fallbackTheme); } catch (_) {}
-    console.log("Theme synced:", fallbackTheme);
 }
 
 export function syncF1LightToggleLabel(): void {
